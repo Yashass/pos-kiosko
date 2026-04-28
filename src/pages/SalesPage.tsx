@@ -1,0 +1,183 @@
+import { useEffect, useRef, useState } from 'react';
+import { Search, ScanLine, X } from 'lucide-react';
+import { useProductStore } from '../stores/productStore';
+import { useSaleStore } from '../stores/saleStore';
+import { getProductByBarcode } from '../lib/db';
+import Cart from '../components/sales/Cart';
+import BarcodeScanner from '../components/sales/BarcodeScanner';
+import { formatCurrency } from '../lib/calculations';
+import toast from 'react-hot-toast';
+import type { Product } from '../types';
+
+export default function SalesPage() {
+  const { products, fetchProducts } = useProductStore();
+  const { addToCart } = useSaleStore();
+  const [search, setSearch] = useState('');
+  const [results, setResults] = useState<Product[]>([]);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    if (!search.trim()) {
+      setResults([]);
+      setShowResults(false);
+      return;
+    }
+    const q = search.toLowerCase();
+    const found = products
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          (p.barcode ?? '').includes(q),
+      )
+      .slice(0, 8);
+    setResults(found);
+    setShowResults(true);
+  }, [search, products]);
+
+  async function handleBarcodeScan(barcode: string) {
+    setScannerOpen(false);
+    const product = await getProductByBarcode(barcode);
+    if (product) {
+      addToCart(product);
+      toast.success(`${product.name} agregado`);
+    } else {
+      toast.error(`Código ${barcode} no encontrado`);
+    }
+  }
+
+  async function handleManualBarcode(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key !== 'Enter') return;
+    const barcode = search.trim();
+    if (!barcode) return;
+
+    // Intentar como código de barras exacto
+    const product = await getProductByBarcode(barcode);
+    if (product) {
+      addToCart(product);
+      setSearch('');
+      setShowResults(false);
+      toast.success(`${product.name} agregado`);
+    }
+  }
+
+  function selectProduct(product: Product) {
+    addToCart(product);
+    setSearch('');
+    setShowResults(false);
+    inputRef.current?.focus();
+    toast.success(`${product.name} agregado`);
+  }
+
+  return (
+    <div className="flex flex-col md:flex-row h-full">
+      {/* Product search panel */}
+      <div className="flex-1 flex flex-col p-4 md:border-r border-slate-200 md:max-w-md lg:max-w-lg">
+        <h1 className="text-xl font-bold text-slate-800 mb-4">Nueva Venta</h1>
+
+        {/* Search bar */}
+        <div className="relative">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                ref={inputRef}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={handleManualBarcode}
+                placeholder="Buscar producto o ingresar código de barras…"
+                className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                autoFocus
+              />
+              {search && (
+                <button
+                  onClick={() => { setSearch(''); setShowResults(false); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            <button
+              onClick={() => setScannerOpen(true)}
+              className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              <ScanLine size={18} />
+              <span className="hidden sm:inline">Escanear</span>
+            </button>
+          </div>
+
+          {/* Dropdown results */}
+          {showResults && results.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-10 overflow-hidden">
+              {results.map((product) => (
+                <button
+                  key={product.id}
+                  onClick={() => selectProduct(product)}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-slate-50 last:border-0"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-slate-800 truncate">{product.name}</p>
+                    <p className="text-xs text-slate-400">
+                      {product.barcode && <span className="font-mono mr-2">{product.barcode}</span>}
+                      Stock: {product.stock}
+                    </p>
+                  </div>
+                  <span className="font-bold text-slate-800 text-sm flex-shrink-0">
+                    {formatCurrency(product.price)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Product grid (frequent items) */}
+        <div className="mt-4 flex-1 overflow-auto">
+          <p className="text-xs text-slate-500 mb-2 font-medium uppercase tracking-wide">Productos</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {products
+              .filter((p) => !search || p.name.toLowerCase().includes(search.toLowerCase()))
+              .slice(0, 30)
+              .map((product) => (
+                <button
+                  key={product.id}
+                  onClick={() => selectProduct(product)}
+                  className="flex flex-col items-start p-3 bg-white border border-slate-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all text-left group"
+                >
+                  <p className="text-xs font-semibold text-slate-700 truncate w-full group-hover:text-blue-700">
+                    {product.name}
+                  </p>
+                  <p className="text-sm font-bold text-slate-900 mt-1">{formatCurrency(product.price)}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Stock: {product.stock}</p>
+                </button>
+              ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Cart panel */}
+      <div className="md:w-80 lg:w-96 border-t md:border-t-0 md:border-l border-slate-200 bg-white flex flex-col max-h-[50vh] md:max-h-full">
+        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
+          <h2 className="font-bold text-slate-700">Carrito</h2>
+        </div>
+        <div className="flex-1 overflow-auto">
+          <Cart />
+        </div>
+      </div>
+
+      {/* Barcode scanner modal */}
+      {scannerOpen && (
+        <BarcodeScanner
+          onScan={handleBarcodeScan}
+          onClose={() => setScannerOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
