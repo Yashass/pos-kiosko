@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Generar íconos PWA</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f8fafc; }
+    button { margin: 8px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+    button:hover { background: #2563eb; }
+    canvas { display: none; }
+    p { color: #475569; }
+    .step { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <h2>Generador de íconos PWA – POS Kiosco</h2>
+
+  <div class="step">
+    <p><strong>Paso 1:</strong> Hacé clic en los botones para descargar los íconos.</p>
+    <button onclick="downloadIcon(192)">Descargar icon-192.png</button>
+    <button onclick="downloadIcon(512)">Descargar icon-512.png</button>
+  </div>
+
+  <div class="step">
+    <p><strong>Paso 2:</strong> Mové los archivos descargados a la carpeta <code>public/</code> del proyecto POS.</p>
+    <p>Ruta: <code>g:\Documentos2\Claude_Projects\POS\public\</code></p>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <script>
+    function drawIcon(ctx, size) {
+      const r = size * 0.19; // border-radius
+
+      // Fondo oscuro con bordes redondeados
+      ctx.fillStyle = '#0f172a';
+      roundRect(ctx, 0, 0, size, size, r);
+      ctx.fill();
+
+      // Tarjeta azul
+      ctx.fillStyle = '#3b82f6';
+      roundRect(ctx, size * 0.16, size * 0.16, size * 0.68, size * 0.68, r * 0.7);
+      ctx.fill();
+
+      // Texto POS
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${size * 0.28}px Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('POS', size / 2, size * 0.47);
+
+      // Barras de código de barras
+      const barY = size * 0.67;
+      const barH = size * 0.1;
+      const barX = size * 0.23;
+      const bars = [12,5,10,5,8,4,11,6,9,4,8,5,14];
+      let x = barX;
+      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      bars.forEach((w, i) => {
+        const bw = w * size / 512;
+        if (i % 2 === 0) {
+          ctx.fillRect(x, barY, bw, barH);
+        }
+        x += bw + 2 * size / 512;
+      });
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function downloadIcon(size) {
+      const canvas = document.getElementById('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, size, size);
+      drawIcon(ctx, size);
+
+      const a = document.createElement('a');
+      a.download = `icon-${size}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    }
+  </script>
+</body>
+</html>
