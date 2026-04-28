@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Calculator } from 'lucide-react';
+import { ArrowLeft, Save, Calculator, ScanLine } from 'lucide-react';
 import { useProductStore } from '../stores/productStore';
 import {
   calcNetPrice, calcTaxInPrice, calcProfitNet, calcProfitGross, calcMarginPct, formatCurrency,
 } from '../lib/calculations';
 import toast from 'react-hot-toast';
+import BarcodeScanner from '../components/sales/BarcodeScanner';
+import { getProductByBarcode } from '../lib/db';
 import type { Product } from '../types';
 
 type FormData = Omit<Product, 'id' | 'created_at' | 'updated_at' | '_synced' | '_deleted' | 'category'>;
@@ -34,6 +36,7 @@ export default function ProductFormPage() {
   const [loading, setLoading] = useState(false);
   const [marginInput, setMarginInput] = useState('');
   const [useMargin, setUseMargin] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -49,6 +52,17 @@ export default function ProductFormPage() {
       }
     }
   }, [id, products]);
+
+  async function handleBarcodeScan(barcode: string) {
+    setScannerOpen(false);
+    const existing = await getProductByBarcode(barcode);
+    if (existing && existing.id !== id) {
+      toast.error(`Ya existe un producto con ese código: ${existing.name}`);
+    } else {
+      set('barcode', barcode);
+      toast.success('Código escaneado');
+    }
+  }
 
   function set<K extends keyof FormData>(key: K, value: FormData[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -124,12 +138,22 @@ export default function ProductFormPage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-600">Código de barras</label>
-              <input
-                value={form.barcode ?? ''}
-                onChange={(e) => set('barcode', e.target.value)}
-                className="input font-mono"
-                placeholder="EAN-13 / Code128…"
-              />
+              <div className="flex gap-1.5">
+                <input
+                  value={form.barcode ?? ''}
+                  onChange={(e) => set('barcode', e.target.value)}
+                  className="input font-mono flex-1 min-w-0"
+                  placeholder="EAN-13 / Code128…"
+                />
+                <button
+                  type="button"
+                  onClick={() => setScannerOpen(true)}
+                  title="Escanear código de barras"
+                  className="flex-shrink-0 px-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <ScanLine size={16} />
+                </button>
+              </div>
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-600">Categoría</label>
@@ -331,6 +355,10 @@ export default function ProductFormPage() {
           </button>
         </div>
       </form>
+
+      {scannerOpen && (
+        <BarcodeScanner onScan={handleBarcodeScan} onClose={() => setScannerOpen(false)} />
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { X, Camera, CameraOff, ShieldAlert } from 'lucide-react';
-import { BrowserMultiFormatReader } from '@zxing/browser';
+import { BrowserMultiFormatReader } from '@zxing/library';
 
 interface Props {
   onScan: (barcode: string) => void;
@@ -23,7 +23,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 
 export default function BarcodeScanner({ onScan, onClose }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const controlsRef = useRef<{ stop: () => void } | null>(null);
+  const readerRef = useRef<BrowserMultiFormatReader | null>(null);
   const doneRef = useRef(false);
   const [status, setStatus] = useState<ScanStatus>('starting');
   const [error, setError] = useState<string | null>(null);
@@ -31,85 +31,68 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
   useEffect(() => {
     let cancelled = false;
 
+    if (!window.isSecureContext) {
+      setError(
+        'La cámara requiere HTTPS.\n\n' +
+          `URL actual: ${window.location.origin}\n\n` +
+          'Accedé a la app usando https:// en lugar de http://',
+      );
+      setStatus('error');
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError('Tu navegador no permite el acceso a la cámara. Usá Chrome o Safari actualizado.');
+      setStatus('error');
+      return;
+    }
+
     (async () => {
-      // 1. Verificar contexto seguro (HTTPS requerido para cámara)
-      if (!window.isSecureContext) {
-        setError(
-          'La cámara requiere HTTPS.\n\n' +
-            `URL actual: ${window.location.origin}\n\n` +
-            'Accedé a la app usando https:// en lugar de http://\n' +
-            'Si estás en desarrollo, ejecutá `npm run dev` y usá la URL con https.',
-        );
-        setStatus('error');
-        return;
-      }
-
-      // 2. Verificar disponibilidad de la API
-      if (!navigator.mediaDevices?.getUserMedia) {
-        setError('Tu navegador no permite el acceso a la cámara. Usá Chrome o Safari actualizado.');
-        setStatus('error');
-        return;
-      }
-
       try {
         const reader = new BrowserMultiFormatReader();
+        readerRef.current = reader;
 
-        // decodeFromConstraints maneja getUserMedia internamente y selecciona la cámara trasera
-        const controls = await reader.decodeFromConstraints(
-          {
-            video: {
-              facingMode: { ideal: 'environment' }, // cámara trasera en móvil
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
-            },
-          },
-          videoRef.current!,
-          (result) => {
-            if (cancelled || doneRef.current) return;
-            if (result) {
-              doneRef.current = true;
-              controls.stop();
-              onScan(result.getText());
-            }
-          },
-        );
-
-        controlsRef.current = controls;
-        if (cancelled) {
-          controls.stop();
-        } else {
-          setStatus('active');
-        }
-      } catch (e) {
-        if (cancelled) return;
-
-        const err = e as DOMException;
-
-        // Si falla con constraints de cámara trasera, reintenta sin restricciones
-        if (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError') {
-          try {
-            const reader2 = new BrowserMultiFormatReader();
-            const controls2 = await reader2.decodeFromConstraints(
-              { video: true },
-              videoRef.current!,
-              (result) => {
-                if (cancelled || doneRef.current) return;
-                if (result) {
-                  doneRef.current = true;
-                  controls2.stop();
-                  onScan(result.getText());
-                }
-              },
-            );
-            controlsRef.current = controls2;
-            if (cancelled) controls2.stop();
-            else setStatus('active');
-            return;
-          } catch {
-            // fall through to generic error
+        // Prefer rear camera on mobile; fall back to any camera if constraints fail
+        let stream: MediaStream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+          });
+        } catch (e) {
+          const err = e as DOMException;
+          if (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError') {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          } else {
+            throw e;
           }
         }
 
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+
+        // Listen for 'playing' on the video to transition to 'active'.
+        // decodeFromStream from @zxing/library handles srcObject + play() internally.
+        const video = videoRef.current!;
+        const onPlaying = () => {
+          if (!cancelled) setStatus('active');
+        };
+        video.addEventListener('playing', onPlaying, { once: true });
+
+        // decodeFromStream: attaches stream, plays video, starts decode loop
+        reader.decodeFromStream(stream, video, (result, err) => {
+          if (cancelled || doneRef.current) return;
+          if (result) {
+            doneRef.current = true;
+            onScan(result.getText());
+          }
+          // err is NotFoundException on frames without a barcode — expected, ignore
+          void err;
+        });
+      } catch (e) {
+        if (cancelled) return;
+        const err = e as DOMException;
         setError(ERROR_MESSAGES[err.name] ?? `Error al acceder a la cámara: ${err.message}`);
         setStatus('error');
       }
@@ -117,7 +100,8 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
 
     return () => {
       cancelled = true;
-      controlsRef.current?.stop();
+      doneRef.current = true;
+      readerRef.current?.reset();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -142,32 +126,28 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
           </button>
         </div>
 
-        {/* Visor de cámara */}
+        {/* Camera viewfinder */}
         <div className="relative bg-black" style={{ aspectRatio: '4/3' }}>
           <video
             ref={videoRef}
-            className="w-full h-full object-cover"
-            autoPlay
+            className="absolute inset-0 w-full h-full object-cover"
             playsInline
             muted
           />
 
-          {/* Marco de escaneo */}
+          {/* Scan frame */}
           {status === 'active' && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="relative w-64 h-40">
-                {/* Esquinas */}
                 <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-blue-400 rounded-tl-lg" />
                 <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-blue-400 rounded-tr-lg" />
                 <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-blue-400 rounded-bl-lg" />
                 <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-blue-400 rounded-br-lg" />
-                {/* Línea de escaneo */}
                 <div className="absolute inset-x-6 top-1/2 h-0.5 bg-red-500/80 animate-pulse" />
               </div>
             </div>
           )}
 
-          {/* Overlay cuando hay error */}
           {status === 'error' && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/60">
               <ShieldAlert size={48} className="text-red-400" />
@@ -175,7 +155,7 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
           )}
         </div>
 
-        {/* Mensaje */}
+        {/* Message */}
         <div className="p-4">
           {status === 'active' && (
             <p className="text-slate-600 text-sm text-center">
