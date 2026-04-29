@@ -9,34 +9,32 @@ export interface SyncResult {
   error?: string;
 }
 
-async function pushSales(): Promise<number> {
+async function pushSales(): Promise<{ pushed: number; error?: string }> {
   const unsynced = await getUnsyncedSales();
-  if (!unsynced.length) return 0;
+  if (!unsynced.length) return { pushed: 0 };
 
   let pushed = 0;
   for (const sale of unsynced) {
     const items = await db.saleItems.where('sale_id').equals(sale.id).toArray();
-
     const { _synced: _s, items: _i, ...saleData } = { ...sale, items };
-    const { error } = await supabase.from('sales').upsert({
-      ...saleData,
-      items: undefined,
-    });
 
-    if (!error) {
-      if (items.length) {
-        await supabase.from('sale_items').upsert(items);
-      }
-      await db.sales.update(sale.id, { _synced: 1 });
-      pushed++;
+    const { error } = await supabase.from('sales').upsert({ ...saleData, items: undefined });
+    if (error) return { pushed, error: `sales: ${error.message}` };
+
+    if (items.length) {
+      const { error: itemErr } = await supabase.from('sale_items').upsert(items);
+      if (itemErr) return { pushed, error: `sale_items: ${itemErr.message}` };
     }
+
+    await db.sales.update(sale.id, { _synced: 1 });
+    pushed++;
   }
-  return pushed;
+  return { pushed };
 }
 
-async function pushProducts(): Promise<number> {
+async function pushProducts(): Promise<{ pushed: number; error?: string }> {
   const unsynced = await getUnsyncedProducts();
-  if (!unsynced.length) return 0;
+  if (!unsynced.length) return { pushed: 0 };
 
   let pushed = 0;
   for (const product of unsynced) {
@@ -46,59 +44,73 @@ async function pushProducts(): Promise<number> {
       category?: Category;
     };
 
+    let error;
     if (product._deleted === 1) {
-      await supabase.from('products').update({ active: false }).eq('id', product.id);
+      ({ error } = await supabase.from('products').update({ active: false }).eq('id', product.id));
     } else {
-      await supabase.from('products').upsert(productData);
+      ({ error } = await supabase.from('products').upsert(productData));
     }
+
+    if (error) return { pushed, error: `products: ${error.message}` };
 
     await db.products.update(product.id, { _synced: 1 });
     pushed++;
   }
-  return pushed;
+  return { pushed };
 }
 
-async function pullProducts(): Promise<number> {
+async function pullProducts(): Promise<{ pulled: number; error?: string }> {
   const { data, error } = await supabase
     .from('products')
     .select('*, category:categories(*)')
     .eq('active', true)
     .order('name');
 
-  if (error || !data) return 0;
+  if (error) return { pulled: 0, error: `products: ${error.message}` };
+  if (!data) return { pulled: 0 };
 
   for (const product of data) {
     const local = await db.products.get(product.id);
     if (!local || local._synced === 1) {
-      await db.products.put({
-        ...product,
-        _synced: 1,
-        _deleted: 0,
-      });
+      await db.products.put({ ...product, _synced: 1, _deleted: 0 });
     }
   }
-  return data.length;
+  return { pulled: data.length };
 }
 
-async function pullCategories(): Promise<void> {
+async function pullCategories(): Promise<{ error?: string }> {
   const { data, error } = await supabase.from('categories').select('*').order('name');
-  if (error || !data) return;
+  if (error) return { error: `categories: ${error.message}` };
+  if (!data) return {};
   for (const cat of data) {
     await db.categories.put(cat);
   }
+  return {};
 }
 
 export async function runSync(): Promise<SyncResult> {
   if (!isSupabaseConfigured()) {
-    return { ok: false, pushed: 0, pulled: 0, error: 'Supabase no configurado' };
+    return { ok: false, pushed: 0, pulled: 0, error: 'Supabase no configurado — revisá el archivo .env' };
   }
 
   try {
-    const [pushedSales, pushedProducts] = await Promise.all([pushSales(), pushProducts()]);
-    await pullCategories();
-    const pulled = await pullProducts();
+    const salesRes = await pushSales();
+    if (salesRes.error) return { ok: false, pushed: salesRes.pushed, pulled: 0, error: salesRes.error };
 
-    return { ok: true, pushed: pushedSales + pushedProducts, pulled };
+    const productsRes = await pushProducts();
+    if (productsRes.error) return { ok: false, pushed: salesRes.pushed + productsRes.pushed, pulled: 0, error: productsRes.error };
+
+    const catsRes = await pullCategories();
+    if (catsRes.error) return { ok: false, pushed: salesRes.pushed + productsRes.pushed, pulled: 0, error: catsRes.error };
+
+    const pullRes = await pullProducts();
+    if (pullRes.error) return { ok: false, pushed: salesRes.pushed + productsRes.pushed, pulled: 0, error: pullRes.error };
+
+    return {
+      ok: true,
+      pushed: salesRes.pushed + productsRes.pushed,
+      pulled: pullRes.pulled,
+    };
   } catch (e) {
     const error = e instanceof Error ? e.message : 'Error de sincronización';
     return { ok: false, pushed: 0, pulled: 0, error };

@@ -37,15 +37,27 @@ export default function Navbar() {
         <button
           onClick={syncNow}
           disabled={!isOnline || status.syncing}
-          className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg transition-colors hover:bg-slate-700 disabled:opacity-50"
-          title={status.lastSync ? `Última sync: ${new Date(status.lastSync).toLocaleTimeString()}` : 'Sin sincronizar'}
+          className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg transition-colors hover:bg-slate-700 disabled:opacity-50 ${status.error ? 'text-red-400' : ''}`}
+          title={
+            status.error
+              ? `Error: ${status.error}`
+              : status.lastSync
+              ? `Última sync: ${new Date(status.lastSync).toLocaleTimeString()}`
+              : 'Sin sincronizar — hacé clic para sincronizar'
+          }
         >
           <RefreshCw
             size={13}
-            className={status.syncing ? 'animate-spin text-blue-400' : 'text-slate-400'}
+            className={
+              status.syncing
+                ? 'animate-spin text-blue-400'
+                : status.error
+                ? 'text-red-400'
+                : 'text-slate-400'
+            }
           />
-          <span className="hidden sm:inline text-slate-300">
-            {status.syncing ? 'Sincronizando…' : 'Sync'}
+          <span className={`hidden sm:inline ${status.error ? 'text-red-400' : 'text-slate-300'}`}>
+            {status.syncing ? 'Sincronizando…' : status.error ? 'Error sync' : 'Sync'}
           </span>
         </button>
 

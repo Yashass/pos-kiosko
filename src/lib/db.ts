@@ -28,9 +28,7 @@ export const db = new PosDatabase();
 
 export async function getActiveProducts(): Promise<Product[]> {
   return db.products
-    .where('active')
-    .equals(1)
-    .and((p) => p._deleted !== 1)
+    .filter((p) => (p.active === true || (p.active as unknown) === 1) && p._deleted !== 1)
     .toArray();
 }
 
