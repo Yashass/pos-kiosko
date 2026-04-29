@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { X, Camera, CameraOff, ShieldAlert } from 'lucide-react';
-import { BrowserMultiFormatReader } from '@zxing/library';
+import { BrowserMultiFormatReader } from '@zxing/browser';
+import type { IScannerControls } from '@zxing/browser';
 
 interface Props {
   onScan: (barcode: string) => void;
@@ -21,9 +22,51 @@ const ERROR_MESSAGES: Record<string, string> = {
   AbortError: 'El acceso a la cámara fue interrumpido. Volvé a intentar.',
 };
 
+function playBeep() {
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = 1800;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.18);
+  } catch {
+    // AudioContext not available — silent fail
+  }
+}
+
+async function startScanner(
+  constraints: MediaStreamConstraints,
+  videoEl: HTMLVideoElement,
+  onResult: (barcode: string, controls: IScannerControls) => void,
+  onError: (err: DOMException) => void,
+): Promise<IScannerControls | null> {
+  const reader = new BrowserMultiFormatReader();
+  try {
+    const controls = await reader.decodeFromConstraints(
+      constraints,
+      videoEl,
+      (result, err, controls) => {
+        if (err || !result) return;
+        onResult(result.getText(), controls);
+      },
+    );
+    return controls;
+  } catch (e) {
+    const err = e as DOMException;
+    onError(err);
+    return null;
+  }
+}
+
 export default function BarcodeScanner({ onScan, onClose }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const readerRef = useRef<BrowserMultiFormatReader | null>(null);
+  const controlsRef = useRef<IScannerControls | null>(null);
   const doneRef = useRef(false);
   const [status, setStatus] = useState<ScanStatus>('starting');
   const [error, setError] = useState<string | null>(null);
@@ -47,61 +90,61 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
       return;
     }
 
-    (async () => {
-      try {
-        const reader = new BrowserMultiFormatReader();
-        readerRef.current = reader;
+    const handleResult = (barcode: string, controls: IScannerControls) => {
+      if (cancelled || doneRef.current) return;
+      doneRef.current = true;
+      playBeep();
+      controls.stop();
+      onScan(barcode);
+    };
 
-        // Prefer rear camera on mobile; fall back to any camera if constraints fail
-        let stream: MediaStream;
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
-          });
-        } catch (e) {
-          const err = e as DOMException;
-          if (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError') {
-            stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          } else {
-            throw e;
-          }
+    const handleError = async (err: DOMException) => {
+      if (cancelled) return;
+
+      // Rear camera constraint failed — retry with any camera
+      if (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError') {
+        const controls = await startScanner(
+          { video: true },
+          videoRef.current!,
+          handleResult,
+          (err2) => {
+            if (cancelled) return;
+            setError(ERROR_MESSAGES[err2.name] ?? `Error al acceder a la cámara: ${err2.message}`);
+            setStatus('error');
+          },
+        );
+        if (controls && !cancelled) {
+          controlsRef.current = controls;
+          setStatus('active');
         }
-
-        if (cancelled) {
-          stream.getTracks().forEach((t) => t.stop());
-          return;
-        }
-
-        // Listen for 'playing' on the video to transition to 'active'.
-        // decodeFromStream from @zxing/library handles srcObject + play() internally.
-        const video = videoRef.current!;
-        const onPlaying = () => {
-          if (!cancelled) setStatus('active');
-        };
-        video.addEventListener('playing', onPlaying, { once: true });
-
-        // decodeFromStream: attaches stream, plays video, starts decode loop
-        reader.decodeFromStream(stream, video, (result, err) => {
-          if (cancelled || doneRef.current) return;
-          if (result) {
-            doneRef.current = true;
-            onScan(result.getText());
-          }
-          // err is NotFoundException on frames without a barcode — expected, ignore
-          void err;
-        });
-      } catch (e) {
-        if (cancelled) return;
-        const err = e as DOMException;
+      } else {
         setError(ERROR_MESSAGES[err.name] ?? `Error al acceder a la cámara: ${err.message}`);
         setStatus('error');
+      }
+    };
+
+    (async () => {
+      const controls = await startScanner(
+        {
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+        },
+        videoRef.current!,
+        handleResult,
+        handleError,
+      );
+      if (controls && !cancelled) {
+        controlsRef.current = controls;
+        setStatus('active');
       }
     })();
 
     return () => {
       cancelled = true;
-      doneRef.current = true;
-      readerRef.current?.reset();
+      controlsRef.current?.stop();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -135,7 +178,7 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
             muted
           />
 
-          {/* Scan frame */}
+          {/* Scan frame overlay */}
           {status === 'active' && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="relative w-64 h-40">
