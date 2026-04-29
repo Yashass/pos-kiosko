@@ -1,6 +1,7 @@
 import { create } from 'zustand';
+import toast from 'react-hot-toast';
 import { db, getActiveProducts } from '../lib/db';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { runSync } from '../lib/sync';
 import type { Product, Category, BulkUpdateOptions } from '../types';
 import { applyPercentage } from '../lib/calculations';
 
@@ -18,6 +19,15 @@ interface ProductStore {
   bulkUpdatePrices: (productIds: string[], options: BulkUpdateOptions) => Promise<void>;
   updateStock: (productId: string, delta: number, type: 'compra' | 'ajuste' | 'devolucion', reason?: string) => Promise<void>;
   getProductById: (id: string) => Product | undefined;
+}
+
+/** Fire-and-forget sync. Shows a toast only on error (not on "not configured"). */
+function syncInBackground() {
+  runSync().then((result) => {
+    if (!result.ok && result.error && !result.error.includes('no configurado')) {
+      toast.error(`Error al sincronizar: ${result.error}`, { duration: 5000, id: 'sync-error' });
+    }
+  }).catch(() => {});
 }
 
 export const useProductStore = create<ProductStore>((set, get) => ({
@@ -57,45 +67,26 @@ export const useProductStore = create<ProductStore>((set, get) => ({
       _deleted: 0,
     };
     await db.products.add(product);
-
-    if (isSupabaseConfigured()) {
-      const { _synced: _s, _deleted: _d, category: _c, ...data } = product as Product & {
-        category?: Category;
-      };
-      const { error } = await supabase.from('products').insert(data);
-      if (!error) await db.products.update(product.id, { _synced: 1 });
-    }
-
     await get().fetchProducts();
+
+    // Sync immediately in background; if offline it stays _synced:0 and
+    // useSync retries automatically when connection is restored.
+    syncInBackground();
+
     return product;
   },
 
   updateProduct: async (id, updates) => {
     const now = new Date().toISOString();
     await db.products.update(id, { ...updates, updated_at: now, _synced: 0 });
-
-    if (isSupabaseConfigured()) {
-      const { _synced: _s, _deleted: _d, category: _c, ...data } = updates as Partial<Product> & {
-        category?: Category;
-        _synced?: number;
-        _deleted?: number;
-      };
-      const { error } = await supabase.from('products').update({ ...data, updated_at: now }).eq('id', id);
-      if (!error) await db.products.update(id, { _synced: 1 });
-    }
-
     await get().fetchProducts();
+    syncInBackground();
   },
 
   deleteProduct: async (id) => {
     await db.products.update(id, { active: false, _synced: 0, _deleted: 1 });
-
-    if (isSupabaseConfigured()) {
-      await supabase.from('products').update({ active: false }).eq('id', id);
-      await db.products.update(id, { _synced: 1 });
-    }
-
     await get().fetchProducts();
+    syncInBackground();
   },
 
   bulkUpdatePrices: async (productIds, options) => {
@@ -121,12 +112,10 @@ export const useProductStore = create<ProductStore>((set, get) => ({
         updates.cost = applyPercentage(product.cost, options.percentage);
         historyEntry.new_cost = updates.cost;
       }
-
       if (options.field === 'price' || options.field === 'both') {
         updates.price = applyPercentage(product.price, options.percentage);
         historyEntry.new_price = updates.price;
       }
-
       if (options.field === 'cost' && options.recalculatePrice) {
         const margin = (product.price - product.cost) / product.cost;
         updates.price = (updates.cost ?? product.cost) * (1 + margin);
@@ -138,22 +127,8 @@ export const useProductStore = create<ProductStore>((set, get) => ({
     }
 
     await db.priceHistory.bulkAdd(priceHistoryRecords);
-
-    if (isSupabaseConfigured()) {
-      for (const product of products) {
-        const updated = await db.products.get(product.id);
-        if (updated) {
-          const { _synced: _s, _deleted: _d, category: _c, ...data } = updated as Product & {
-            category?: Category;
-          };
-          await supabase.from('products').upsert(data);
-          await db.products.update(product.id, { _synced: 1 });
-        }
-      }
-      await supabase.from('price_history').insert(priceHistoryRecords);
-    }
-
     await get().fetchProducts();
+    syncInBackground();
   },
 
   updateStock: async (productId, delta, type, reason) => {
@@ -163,9 +138,13 @@ export const useProductStore = create<ProductStore>((set, get) => ({
     const previousStock = product.stock;
     const newStock = Math.max(0, previousStock + delta);
 
-    await db.products.update(productId, { stock: newStock, updated_at: new Date().toISOString(), _synced: 0 });
+    await db.products.update(productId, {
+      stock: newStock,
+      updated_at: new Date().toISOString(),
+      _synced: 0,
+    });
 
-    const movement = {
+    await db.stockMovements.add({
       id: crypto.randomUUID(),
       product_id: productId,
       type,
@@ -174,17 +153,10 @@ export const useProductStore = create<ProductStore>((set, get) => ({
       new_stock: newStock,
       reason: reason ?? '',
       created_at: new Date().toISOString(),
-    };
-
-    await db.stockMovements.add(movement);
-
-    if (isSupabaseConfigured()) {
-      await supabase.from('products').update({ stock: newStock }).eq('id', productId);
-      await supabase.from('stock_movements').insert(movement);
-      await db.products.update(productId, { _synced: 1 });
-    }
+    });
 
     await get().fetchProducts();
+    syncInBackground();
   },
 
   getProductById: (id) => get().products.find((p) => p.id === id),
