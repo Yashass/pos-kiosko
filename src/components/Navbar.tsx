@@ -15,9 +15,7 @@ export default function Navbar() {
   return (
     <header className="bg-zinc-950 text-zinc-100 px-4 py-3 flex items-center justify-between shadow-lg border-b border-zinc-800">
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 bg-red-700 rounded-lg flex items-center justify-center font-bold text-sm text-white">
-          POS
-        </div>
+        <img src="/icon.svg" alt="POS Kyoskuhin" className="w-8 h-8 object-contain" />
         <div>
           <h1 className="font-bold text-sm leading-tight text-zinc-100">POS Kyoskuhin</h1>
           <p className="text-xs text-zinc-500">

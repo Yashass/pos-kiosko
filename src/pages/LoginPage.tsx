@@ -1,4 +1,3 @@
-import { ShoppingCart } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 
 export default function LoginPage() {
@@ -8,9 +7,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
       <div className="bg-zinc-900 rounded-2xl shadow-2xl p-8 w-full max-w-sm space-y-6 border border-zinc-800">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-16 h-16 bg-red-700 rounded-2xl flex items-center justify-center shadow-lg shadow-red-900/40">
-            <ShoppingCart size={32} className="text-white" />
-          </div>
+          <img src="/icon.svg" alt="POS Kyoskuhin" className="w-20 h-20 object-contain" />
           <h1 className="text-2xl font-bold text-zinc-100">POS Kyoskuhin</h1>
           <p className="text-sm text-zinc-500 text-center">Iniciá sesión para continuar</p>
         </div>
