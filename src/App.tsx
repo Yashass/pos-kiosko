@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import AuthGuard from './components/AuthGuard';
 import Layout from './components/Layout';
 import DashboardPage from './pages/DashboardPage';
 import SalesPage from './pages/SalesPage';
+import SalesHistoryPage from './pages/SalesHistoryPage';
 import ProductsPage from './pages/ProductsPage';
 import ProductFormPage from './pages/ProductFormPage';
 import InventoryPage from './pages/InventoryPage';
@@ -17,15 +19,18 @@ export default function App() {
           style: { borderRadius: '10px', fontSize: '14px' },
         }}
       />
-      <Routes>
-        <Route element={<Layout />}>
-          <Route index element={<DashboardPage />} />
-          <Route path="ventas" element={<SalesPage />} />
-          <Route path="productos" element={<ProductsPage />} />
-          <Route path="productos/:id" element={<ProductFormPage />} />
-          <Route path="inventario" element={<InventoryPage />} />
-        </Route>
-      </Routes>
+      <AuthGuard>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route index element={<DashboardPage />} />
+            <Route path="ventas" element={<SalesPage />} />
+            <Route path="historial" element={<SalesHistoryPage />} />
+            <Route path="productos" element={<ProductsPage />} />
+            <Route path="productos/:id" element={<ProductFormPage />} />
+            <Route path="inventario" element={<InventoryPage />} />
+          </Route>
+        </Routes>
+      </AuthGuard>
     </BrowserRouter>
   );
 }

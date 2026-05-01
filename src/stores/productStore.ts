@@ -1,7 +1,6 @@
 import { create } from 'zustand';
-import toast from 'react-hot-toast';
 import { db, getActiveProducts } from '../lib/db';
-import { runSync } from '../lib/sync';
+import { syncInBackground } from '../lib/sync';
 import type { Product, Category, BulkUpdateOptions } from '../types';
 import { applyPercentage } from '../lib/calculations';
 
@@ -19,15 +18,6 @@ interface ProductStore {
   bulkUpdatePrices: (productIds: string[], options: BulkUpdateOptions) => Promise<void>;
   updateStock: (productId: string, delta: number, type: 'compra' | 'ajuste' | 'devolucion', reason?: string) => Promise<void>;
   getProductById: (id: string) => Product | undefined;
-}
-
-/** Fire-and-forget sync. Shows a toast only on error (not on "not configured"). */
-function syncInBackground() {
-  runSync().then((result) => {
-    if (!result.ok && result.error && !result.error.includes('no configurado')) {
-      toast.error(`Error al sincronizar: ${result.error}`, { duration: 5000, id: 'sync-error' });
-    }
-  }).catch(() => {});
 }
 
 export const useProductStore = create<ProductStore>((set, get) => ({
@@ -106,6 +96,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
         change_pct: options.percentage,
         reason: `Actualización masiva: ${options.field} ${options.percentage > 0 ? '+' : ''}${options.percentage}%`,
         created_at: now,
+        _synced: 0,
       };
 
       if (options.field === 'cost' || options.field === 'both') {
@@ -153,6 +144,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
       new_stock: newStock,
       reason: reason ?? '',
       created_at: new Date().toISOString(),
+      _synced: 0,
     });
 
     await get().fetchProducts();

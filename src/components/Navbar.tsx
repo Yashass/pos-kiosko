@@ -1,7 +1,8 @@
-import { RefreshCw, Wifi, WifiOff, ShoppingCart } from 'lucide-react';
+import { RefreshCw, Wifi, WifiOff, ShoppingCart, LogOut } from 'lucide-react';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { useSync } from '../hooks/useSync';
 import { useSaleStore } from '../stores/saleStore';
+import { useAuthStore } from '../stores/authStore';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -9,6 +10,7 @@ export default function Navbar() {
   const isOnline = useOnlineStatus();
   const { status, syncNow } = useSync();
   const cartCount = useSaleStore((s) => s.cart.reduce((acc, i) => acc + i.quantity, 0));
+  const { user, skipAuth, signOut } = useAuthStore();
 
   return (
     <header className="bg-slate-900 text-white px-4 py-3 flex items-center justify-between shadow-lg">
@@ -70,6 +72,18 @@ export default function Navbar() {
           {isOnline ? <Wifi size={13} /> : <WifiOff size={13} />}
           <span className="hidden sm:inline">{isOnline ? 'Online' : 'Offline'}</span>
         </div>
+
+        {/* User / sign-out */}
+        {!skipAuth && user && (
+          <button
+            onClick={signOut}
+            className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
+            title={`Cerrar sesión (${user.email})`}
+          >
+            <LogOut size={13} />
+            <span className="hidden sm:inline">Salir</span>
+          </button>
+        )}
       </div>
     </header>
   );

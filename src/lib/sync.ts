@@ -1,5 +1,12 @@
+import toast from 'react-hot-toast';
 import { supabase, isSupabaseConfigured } from './supabase';
-import { db, getUnsyncedSales, getUnsyncedProducts } from './db';
+import {
+  db,
+  getUnsyncedSales,
+  getUnsyncedProducts,
+  getUnsyncedStockMovements,
+  getUnsyncedPriceHistory,
+} from './db';
 import type { Product, Category } from '../types';
 
 export interface SyncResult {
@@ -71,10 +78,46 @@ async function pushProducts(): Promise<{ pushed: number; error?: string }> {
 
     if (supabaseError) {
       errors.push(`"${product.name}": ${supabaseError.message}`);
-      continue; // try remaining products instead of aborting
+      continue;
     }
 
     await db.products.update(product.id, { _synced: 1 });
+    pushed++;
+  }
+
+  return errors.length ? { pushed, error: errors.join(' | ') } : { pushed };
+}
+
+async function pushStockMovements(): Promise<{ pushed: number; error?: string }> {
+  const unsynced = await getUnsyncedStockMovements();
+  if (!unsynced.length) return { pushed: 0 };
+
+  let pushed = 0;
+  const errors: string[] = [];
+
+  for (const movement of unsynced) {
+    const { _synced: _s, ...data } = movement;
+    const { error } = await supabase.from('stock_movements').upsert(data);
+    if (error) { errors.push(error.message); continue; }
+    await db.stockMovements.update(movement.id, { _synced: 1 });
+    pushed++;
+  }
+
+  return errors.length ? { pushed, error: errors.join(' | ') } : { pushed };
+}
+
+async function pushPriceHistory(): Promise<{ pushed: number; error?: string }> {
+  const unsynced = await getUnsyncedPriceHistory();
+  if (!unsynced.length) return { pushed: 0 };
+
+  let pushed = 0;
+  const errors: string[] = [];
+
+  for (const record of unsynced) {
+    const { _synced: _s, ...data } = record;
+    const { error } = await supabase.from('price_history').upsert(data);
+    if (error) { errors.push(error.message); continue; }
+    await db.priceHistory.update(record.id, { _synced: 1 });
     pushed++;
   }
 
@@ -93,7 +136,6 @@ async function pullProducts(): Promise<{ pulled: number; error?: string }> {
 
   for (const product of data) {
     const local = await db.products.get(product.id);
-    // Only overwrite if record doesn't exist locally or is already synced
     if (!local || local._synced === 1) {
       await db.products.put({ ...product, _synced: 1, _deleted: 0 });
     }
@@ -117,7 +159,7 @@ export async function runSync(): Promise<SyncResult> {
   }
 
   if (syncInProgress) {
-    return { ok: true, pushed: 0, pulled: 0 }; // another sync is already running
+    return { ok: true, pushed: 0, pulled: 0 };
   }
 
   syncInProgress = true;
@@ -125,11 +167,15 @@ export async function runSync(): Promise<SyncResult> {
   try {
     const salesRes = await pushSales();
     const productsRes = await pushProducts();
+    const stockRes = await pushStockMovements();
+    const priceRes = await pushPriceHistory();
     const catsRes = await pullCategories();
     const pullRes = await pullProducts();
 
-    const pushed = salesRes.pushed + productsRes.pushed;
-    const firstError = salesRes.error ?? productsRes.error ?? catsRes.error ?? pullRes.error;
+    const pushed = salesRes.pushed + productsRes.pushed + stockRes.pushed + priceRes.pushed;
+    const firstError =
+      salesRes.error ?? productsRes.error ?? stockRes.error ?? priceRes.error ??
+      catsRes.error ?? pullRes.error;
 
     return {
       ok: !firstError,
@@ -142,6 +188,15 @@ export async function runSync(): Promise<SyncResult> {
   } finally {
     syncInProgress = false;
   }
+}
+
+/** Fire-and-forget sync. Shows a toast only on error (not on "not configured"). */
+export function syncInBackground() {
+  runSync().then((result) => {
+    if (!result.ok && result.error && !result.error.includes('no configurado')) {
+      toast.error(`Error al sincronizar: ${result.error}`, { duration: 5000, id: 'sync-error' });
+    }
+  }).catch(() => {});
 }
 
 export async function pullInitialData(): Promise<void> {

@@ -150,3 +150,10 @@ CREATE POLICY "allow_all_sales" ON sales FOR ALL USING (true);
 CREATE POLICY "allow_all_sale_items" ON sale_items FOR ALL USING (true);
 CREATE POLICY "allow_all_stock_movements" ON stock_movements FOR ALL USING (true);
 CREATE POLICY "allow_all_price_history" ON price_history FOR ALL USING (true);
+
+-- ============================================================
+-- MIGRATION: Add cancellation fields to sales
+-- Run this if the table already exists
+-- ============================================================
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMPTZ;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS cancellation_reason TEXT;

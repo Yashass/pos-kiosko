@@ -59,6 +59,8 @@ export interface Sale {
   amount_paid?: number;
   change_given: number;
   notes?: string;
+  cancelled_at?: string;
+  cancellation_reason?: string;
   items?: SaleItem[];
   created_at: string;
   _synced?: number;
@@ -74,6 +76,7 @@ export interface StockMovement {
   reason?: string;
   unit_cost?: number;
   created_at: string;
+  _synced?: number;
 }
 
 export interface PriceHistory {
@@ -86,6 +89,7 @@ export interface PriceHistory {
   change_pct?: number;
   reason?: string;
   created_at: string;
+  _synced?: number;
 }
 
 export type WidgetId = 'net_profit' | 'stock_summary' | 'product_ranking' | 'daily_sales' | 'recent_sales';
@@ -102,7 +106,7 @@ export interface WidgetConfig {
   minH?: number;
 }
 
-export type DateRange = 'hoy' | 'semana' | 'mes' | 'anio';
+export type DateRange = 'hoy' | 'semana' | 'mes' | 'anio' | 'rango';
 
 export interface DashboardConfig {
   dateRange: DateRange;

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import GridLayout, { type Layout } from 'react-grid-layout';
-import { Settings, RotateCcw, X, GripVertical } from 'lucide-react';
+import { Settings, RotateCcw, Save, X, GripVertical } from 'lucide-react';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { useWindowSize } from '../../hooks/useWindowSize';
 import type { WidgetId } from '../../types';
@@ -9,6 +9,7 @@ import StockWidget from './widgets/StockWidget';
 import ProductRankingWidget from './widgets/ProductRankingWidget';
 import DailySalesWidget from './widgets/DailySalesWidget';
 import RecentSalesWidget from './widgets/RecentSalesWidget';
+import toast from 'react-hot-toast';
 
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -33,7 +34,7 @@ const ROW_HEIGHT = 120;
 const COLS = 12;
 
 export default function DashboardGrid() {
-  const { widgets, setWidgets, toggleWidget, resetLayout } = useDashboardStore();
+  const { widgets, savedWidgets, setWidgets, toggleWidget, saveLayout, resetLayout } = useDashboardStore();
   const [configOpen, setConfigOpen] = useState(false);
   const { width } = useWindowSize();
 
@@ -41,6 +42,8 @@ export default function DashboardGrid() {
   const isMobile = containerWidth < 600;
 
   const enabledWidgets = widgets.filter((w) => w.enabled);
+
+  const hasUnsavedChanges = JSON.stringify(widgets) !== JSON.stringify(savedWidgets);
 
   const layout: Layout[] = enabledWidgets.map((w) => ({
     i: w.id,
@@ -64,6 +67,16 @@ export default function DashboardGrid() {
     [widgets, setWidgets],
   );
 
+  function handleSave() {
+    saveLayout();
+    toast.success('Diseño guardado');
+  }
+
+  function handleReset() {
+    resetLayout();
+    toast('Diseño restablecido al último guardado', { icon: '↩️' });
+  }
+
   return (
     <div className="space-y-4">
       {/* Toolbar */}
@@ -75,13 +88,32 @@ export default function DashboardGrid() {
           <Settings size={15} />
           <span>Personalizar</span>
         </button>
-        <button
-          onClick={resetLayout}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
-          title="Restablecer diseño"
-        >
-          <RotateCcw size={15} />
-        </button>
+
+        {!isMobile && (
+          <>
+            <button
+              onClick={handleSave}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                hasUnsavedChanges
+                  ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+                  : 'text-slate-400 border-slate-200 cursor-default'
+              }`}
+              disabled={!hasUnsavedChanges}
+              title="Guardar diseño actual"
+            >
+              <Save size={15} />
+              <span>Guardar</span>
+            </button>
+
+            <button
+              onClick={handleReset}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+              title="Restablecer al último diseño guardado"
+            >
+              <RotateCcw size={15} />
+            </button>
+          </>
+        )}
       </div>
 
       {/* Grid */}
@@ -132,7 +164,7 @@ export default function DashboardGrid() {
                 Activá o desactivá los widgets. En desktop podés arrastrarlos y redimensionarlos.
               </p>
               {widgets.map((w) => (
-                <label key={w.id} className="flex items-center gap-3 py-2 cursor-pointer group">
+                <label key={w.id} className="flex items-center gap-3 py-2 cursor-pointer">
                   <div
                     className={`w-10 h-5 rounded-full transition-colors relative ${w.enabled ? 'bg-blue-600' : 'bg-slate-200'}`}
                     onClick={() => toggleWidget(w.id)}
@@ -149,16 +181,18 @@ export default function DashboardGrid() {
             </div>
             <div className="px-5 py-4 border-t flex gap-2">
               <button
-                onClick={resetLayout}
-                className="flex-1 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50"
+                onClick={() => { handleReset(); setConfigOpen(false); }}
+                className="flex-1 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center justify-center gap-1.5"
               >
+                <RotateCcw size={13} />
                 Restablecer
               </button>
               <button
-                onClick={() => setConfigOpen(false)}
-                className="flex-1 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+                onClick={() => { handleSave(); setConfigOpen(false); }}
+                className="flex-1 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold flex items-center justify-center gap-1.5"
               >
-                Listo
+                <Save size={13} />
+                Guardar y cerrar
               </button>
             </div>
           </div>

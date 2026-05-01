@@ -35,3 +35,6 @@ npm-debug.log*
 
 # TypeScript cache
 *.tsbuildinfo
+
+# PWA dev output
+dev-dist/

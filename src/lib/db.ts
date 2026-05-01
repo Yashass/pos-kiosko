@@ -19,6 +19,18 @@ class PosDatabase extends Dexie {
       stockMovements: 'id, product_id, type, created_at',
       priceHistory: 'id, product_id, created_at',
     });
+    // Version 2: add _synced index to stockMovements and priceHistory for sync tracking
+    this.version(2).stores({
+      products: 'id, barcode, name, category_id, active, _synced, _deleted, updated_at',
+      categories: 'id, name',
+      sales: 'id, created_at, _synced, payment_method',
+      saleItems: 'id, sale_id, product_id, created_at',
+      stockMovements: 'id, product_id, type, created_at, _synced',
+      priceHistory: 'id, product_id, created_at, _synced',
+    }).upgrade(async (tx) => {
+      await tx.table('stockMovements').toCollection().modify({ _synced: 0 });
+      await tx.table('priceHistory').toCollection().modify({ _synced: 0 });
+    });
   }
 }
 
@@ -38,6 +50,10 @@ export async function getProductByBarcode(barcode: string): Promise<Product | un
     .equals(barcode)
     .and((p) => p.active === true && p._deleted !== 1)
     .first();
+}
+
+export async function getAllSales(): Promise<Sale[]> {
+  return db.sales.orderBy('created_at').reverse().toArray();
 }
 
 export async function getSalesInRange(from: Date, to: Date): Promise<Sale[]> {
@@ -75,4 +91,12 @@ export async function getUnsyncedSales(): Promise<Sale[]> {
 
 export async function getUnsyncedProducts(): Promise<Product[]> {
   return db.products.where('_synced').equals(0).toArray();
+}
+
+export async function getUnsyncedStockMovements(): Promise<StockMovement[]> {
+  return db.stockMovements.where('_synced').equals(0).toArray();
+}
+
+export async function getUnsyncedPriceHistory(): Promise<PriceHistory[]> {
+  return db.priceHistory.where('_synced').equals(0).toArray();
 }

@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import {
   LayoutDashboard,
   ShoppingCart,
+  History,
   Package,
   ClipboardList,
 } from 'lucide-react';
@@ -10,6 +11,7 @@ import Navbar from './Navbar';
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/ventas', icon: ShoppingCart, label: 'Ventas' },
+  { to: '/historial', icon: History, label: 'Historial' },
   { to: '/productos', icon: Package, label: 'Productos' },
   { to: '/inventario', icon: ClipboardList, label: 'Inventario' },
 ];
