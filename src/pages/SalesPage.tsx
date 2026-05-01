@@ -76,7 +76,7 @@ export default function SalesPage() {
   return (
     <div className="flex flex-col md:flex-row h-full">
       {/* Product search panel */}
-      <div className="flex flex-col p-4 md:flex-1 md:border-r border-zinc-800 md:max-w-md lg:max-w-lg max-h-[40vh] md:max-h-none overflow-hidden">
+      <div className="flex-none md:flex-1 flex flex-col p-4 md:border-r border-zinc-800 md:max-w-md lg:max-w-lg">
         <h1 className="text-xl font-bold text-zinc-100 mb-4">Nueva Venta</h1>
 
         {/* Search bar */}
@@ -136,8 +136,8 @@ export default function SalesPage() {
           )}
         </div>
 
-        {/* Product grid (frequent items) */}
-        <div className="mt-4 flex-1 overflow-auto">
+        {/* Product grid (frequent items) — solo desktop */}
+        <div className="mt-4 flex-1 overflow-auto hidden md:block">
           <p className="text-xs text-zinc-500 mb-2 font-medium uppercase tracking-wide">Productos</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {products
