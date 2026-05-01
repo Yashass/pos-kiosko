@@ -8,6 +8,7 @@ import SalesHistoryPage from './pages/SalesHistoryPage';
 import ProductsPage from './pages/ProductsPage';
 import ProductFormPage from './pages/ProductFormPage';
 import InventoryPage from './pages/InventoryPage';
+import LogsPage from './pages/LogsPage';
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
             <Route path="productos" element={<ProductsPage />} />
             <Route path="productos/:id" element={<ProductFormPage />} />
             <Route path="inventario" element={<InventoryPage />} />
+            <Route path="logs" element={<LogsPage />} />
           </Route>
         </Routes>
       </AuthGuard>

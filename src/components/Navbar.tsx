@@ -19,9 +19,9 @@ export default function Navbar() {
           POS
         </div>
         <div>
-          <h1 className="font-bold text-sm leading-tight text-zinc-100">POS Kiosco</h1>
+          <h1 className="font-bold text-sm leading-tight text-zinc-100">POS Kyoskuhin</h1>
           <p className="text-xs text-zinc-500">
-            {format(new Date(), "EEEE d MMM", { locale: es })}
+            {format(new Date(), "EEEE d MMM yyyy", { locale: es })}
           </p>
         </div>
       </div>

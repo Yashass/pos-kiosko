@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import { db, getAllSales, getSalesInRange, getSaleItems } from '../lib/db';
-import { syncInBackground } from '../lib/sync';
+import { db, getAllSales, getSalesInRange, getSaleItems, getAllSaleLogs } from '../lib/db';
+import { syncInBackground, pullSales, pullSaleLogs } from '../lib/sync';
 import { buildSale, buildSaleItems, calcCartTotals } from '../lib/calculations';
 import { useProductStore } from './productStore';
-import type { CartItem, Product, Sale, PaymentMethod } from '../types';
+import type { CartItem, Product, Sale, SaleLog, PaymentMethod } from '../types';
 
 interface SaleStore {
   cart: CartItem[];
@@ -11,6 +11,8 @@ interface SaleStore {
   isProcessing: boolean;
   sales: Sale[];
   salesLoading: boolean;
+  saleLogs: SaleLog[];
+  logsLoading: boolean;
 
   addToCart: (product: Product, quantity?: number) => void;
   removeFromCart: (productId: string) => void;
@@ -20,8 +22,9 @@ interface SaleStore {
   cartTotals: () => ReturnType<typeof calcCartTotals>;
   /** Pass null/null to load all sales without date filter. */
   loadSales: (from: Date | null, to: Date | null) => Promise<void>;
-  cancelSale: (id: string, reason?: string) => Promise<void>;
-  editSale: (id: string, updates: Partial<Pick<Sale, 'payment_method' | 'amount_paid' | 'notes'>>) => Promise<void>;
+  loadLogs: () => Promise<void>;
+  cancelSale: (id: string, reason: string) => Promise<void>;
+  editSale: (id: string, updates: Partial<Pick<Sale, 'payment_method' | 'amount_paid' | 'notes'>>, auditNote: string) => Promise<void>;
 }
 
 export const useSaleStore = create<SaleStore>((set, get) => ({
@@ -30,6 +33,8 @@ export const useSaleStore = create<SaleStore>((set, get) => ({
   isProcessing: false,
   sales: [],
   salesLoading: false,
+  saleLogs: [],
+  logsLoading: false,
 
   addToCart: (product, quantity = 1) => {
     set((state) => {
@@ -120,6 +125,9 @@ export const useSaleStore = create<SaleStore>((set, get) => ({
   loadSales: async (from, to) => {
     set({ salesLoading: true });
     try {
+      // Pull from Supabase first so history is up-to-date on any device
+      await pullSales(from ?? undefined, to ?? undefined);
+
       const raw = from && to ? await getSalesInRange(from, to) : await getAllSales();
       const withItems = await Promise.all(
         raw.map(async (sale) => ({ ...sale, items: await getSaleItems(sale.id) })),
@@ -132,6 +140,18 @@ export const useSaleStore = create<SaleStore>((set, get) => ({
     }
   },
 
+  loadLogs: async () => {
+    set({ logsLoading: true });
+    try {
+      // Pull from Supabase first to get logs from other devices
+      await pullSaleLogs();
+      const logs = await getAllSaleLogs();
+      set({ saleLogs: logs, logsLoading: false });
+    } catch {
+      set({ logsLoading: false });
+    }
+  },
+
   cancelSale: async (id, reason) => {
     const sale = await db.sales.get(id);
     if (!sale || sale.cancelled_at) return;
@@ -139,7 +159,7 @@ export const useSaleStore = create<SaleStore>((set, get) => ({
     const now = new Date().toISOString();
     await db.sales.update(id, {
       cancelled_at: now,
-      cancellation_reason: reason ?? '',
+      cancellation_reason: reason,
       _synced: 0,
     });
 
@@ -161,11 +181,22 @@ export const useSaleStore = create<SaleStore>((set, get) => ({
         quantity: item.quantity,
         previous_stock: product.stock,
         new_stock: newStock,
-        reason: `Cancelación de venta${reason ? ': ' + reason : ''}`,
+        reason: `Cancelación de venta: ${reason}`,
         created_at: now,
         _synced: 0,
       });
     }
+
+    // Audit log
+    await db.saleLogs.add({
+      id: crypto.randomUUID(),
+      sale_id: id,
+      action: 'cancel',
+      changes: JSON.stringify([]),
+      note: reason,
+      created_at: now,
+      _synced: 0,
+    });
 
     syncInBackground();
     useProductStore.getState().fetchProducts();
@@ -173,21 +204,46 @@ export const useSaleStore = create<SaleStore>((set, get) => ({
     set((state) => ({
       sales: state.sales.map((s) =>
         s.id === id
-          ? { ...s, cancelled_at: now, cancellation_reason: reason ?? '' }
+          ? { ...s, cancelled_at: now, cancellation_reason: reason }
           : s,
       ),
     }));
   },
 
-  editSale: async (id, updates) => {
+  editSale: async (id, updates, auditNote) => {
+    const sale = await db.sales.get(id);
+    if (!sale) return;
+
+    // Build change entries for the audit trail
+    const changes: { field: string; old: string; new: string }[] = [];
+    if (updates.payment_method && updates.payment_method !== sale.payment_method) {
+      changes.push({ field: 'Método de pago', old: sale.payment_method, new: updates.payment_method });
+    }
+    if (updates.amount_paid !== undefined && updates.amount_paid !== sale.amount_paid) {
+      changes.push({ field: 'Monto cobrado', old: String(sale.amount_paid ?? 0), new: String(updates.amount_paid) });
+    }
+    if (updates.notes !== undefined && updates.notes !== sale.notes) {
+      changes.push({ field: 'Notas', old: sale.notes ?? '', new: updates.notes ?? '' });
+    }
+
     const extra: Partial<Sale> = {};
     if (updates.amount_paid !== undefined) {
-      const sale = await db.sales.get(id);
-      if (sale) {
-        extra.change_given = Math.max(0, updates.amount_paid - sale.total);
-      }
+      extra.change_given = Math.max(0, updates.amount_paid - sale.total);
     }
+
     await db.sales.update(id, { ...updates, ...extra, _synced: 0 });
+
+    // Audit log
+    await db.saleLogs.add({
+      id: crypto.randomUUID(),
+      sale_id: id,
+      action: 'edit',
+      changes: JSON.stringify(changes),
+      note: auditNote,
+      created_at: new Date().toISOString(),
+      _synced: 0,
+    });
+
     syncInBackground();
     set((state) => ({
       sales: state.sales.map((s) =>

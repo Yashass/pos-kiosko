@@ -5,6 +5,7 @@ import {
   History,
   Package,
   ClipboardList,
+  FileText,
 } from 'lucide-react';
 import Navbar from './Navbar';
 
@@ -14,6 +15,7 @@ const navItems = [
   { to: '/historial', icon: History, label: 'Historial' },
   { to: '/productos', icon: Package, label: 'Productos' },
   { to: '/inventario', icon: ClipboardList, label: 'Inventario' },
+  { to: '/logs', icon: FileText, label: 'Logs' },
 ];
 
 export default function Layout() {

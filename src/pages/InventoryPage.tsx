@@ -313,7 +313,7 @@ export default function InventoryPage() {
                         {m.reason && <p className="text-xs text-zinc-500 truncate">{m.reason}</p>}
                       </div>
                       <p className="text-xs text-zinc-500 flex-shrink-0">
-                        {format(parseISO(m.created_at), 'dd/MM HH:mm', { locale: es })}
+                        {format(parseISO(m.created_at), 'dd/MM/yyyy HH:mm', { locale: es })}
                       </p>
                     </div>
                   ))

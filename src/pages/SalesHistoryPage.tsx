@@ -96,6 +96,7 @@ export default function SalesHistoryPage() {
   const [cancelling, setCancelling] = useState<Sale | null>(null);
   const [cancelReason, setCancelReason] = useState('');
   const [editForm, setEditForm] = useState({ payment_method: '', amount_paid: '', notes: '' });
+  const [editAuditNote, setEditAuditNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   const getRange = useCallback((): [Date | null, Date | null] => {
@@ -131,6 +132,7 @@ export default function SalesHistoryPage() {
 
   function openEdit(sale: Sale) {
     setEditing(sale);
+    setEditAuditNote('');
     setEditForm({
       payment_method: sale.payment_method,
       amount_paid: sale.amount_paid?.toString() ?? '',
@@ -140,13 +142,21 @@ export default function SalesHistoryPage() {
 
   async function handleEdit() {
     if (!editing) return;
+    if (!editAuditNote.trim()) {
+      toast.error('El motivo de la modificación es obligatorio');
+      return;
+    }
     setIsSaving(true);
     try {
-      await editSale(editing.id, {
-        payment_method: editForm.payment_method as Sale['payment_method'],
-        amount_paid: editForm.amount_paid ? parseFloat(editForm.amount_paid) : undefined,
-        notes: editForm.notes || undefined,
-      });
+      await editSale(
+        editing.id,
+        {
+          payment_method: editForm.payment_method as Sale['payment_method'],
+          amount_paid: editForm.amount_paid ? parseFloat(editForm.amount_paid) : undefined,
+          notes: editForm.notes || undefined,
+        },
+        editAuditNote.trim(),
+      );
       toast.success('Venta actualizada');
       setEditing(null);
     } finally {
@@ -156,9 +166,13 @@ export default function SalesHistoryPage() {
 
   async function handleCancel() {
     if (!cancelling) return;
+    if (!cancelReason.trim()) {
+      toast.error('El motivo de cancelación es obligatorio');
+      return;
+    }
     setIsSaving(true);
     try {
-      await cancelSale(cancelling.id, cancelReason || undefined);
+      await cancelSale(cancelling.id, cancelReason.trim());
       toast.success('Venta cancelada — stock revertido');
       setCancelling(null);
       setCancelReason('');
@@ -309,7 +323,6 @@ export default function SalesHistoryPage() {
                   isCancelled ? 'border-red-900 opacity-60' : 'border-zinc-800'
                 }`}
               >
-                {/* Row header */}
                 <button
                   onClick={() => setExpandedId(isExpanded ? null : sale.id)}
                   className="w-full flex items-center gap-3 p-3 text-left"
@@ -341,11 +354,7 @@ export default function SalesHistoryPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span
-                      className={`text-base font-bold ${
-                        isCancelled ? 'line-through text-zinc-500' : 'text-zinc-100'
-                      }`}
-                    >
+                    <span className={`text-base font-bold ${isCancelled ? 'line-through text-zinc-500' : 'text-zinc-100'}`}>
                       {formatCurrency(sale.total)}
                     </span>
                     {isExpanded
@@ -354,10 +363,8 @@ export default function SalesHistoryPage() {
                   </div>
                 </button>
 
-                {/* Expanded detail */}
                 {isExpanded && (
                   <div className="border-t border-zinc-800 px-3 pb-3">
-                    {/* Items */}
                     <div className="pt-2 space-y-1 mb-3">
                       {(sale.items ?? []).map((item) => (
                         <div key={item.id} className="flex justify-between text-sm">
@@ -367,7 +374,6 @@ export default function SalesHistoryPage() {
                       ))}
                     </div>
 
-                    {/* Totals / notes */}
                     <div className="text-xs text-zinc-500 border-t border-zinc-800 pt-2 mb-3 space-y-0.5">
                       {(sale.amount_paid ?? 0) > 0 && (
                         <div className="flex justify-between">
@@ -395,7 +401,6 @@ export default function SalesHistoryPage() {
                       )}
                     </div>
 
-                    {/* Actions */}
                     {!isCancelled && (
                       <div className="flex gap-2">
                         <button
@@ -458,7 +463,7 @@ export default function SalesHistoryPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">Notas</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-1">Notas de la venta</label>
               <textarea
                 value={editForm.notes}
                 onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))}
@@ -466,6 +471,24 @@ export default function SalesHistoryPage() {
                 rows={2}
                 placeholder="Opcional…"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-1">
+                Motivo de la modificación <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={editAuditNote}
+                onChange={(e) => setEditAuditNote(e.target.value)}
+                className={`w-full border rounded-lg px-3 py-2 text-sm bg-zinc-800 text-zinc-100 ${
+                  editAuditNote.trim() ? 'border-zinc-700' : 'border-red-700'
+                }`}
+                placeholder="Ej: Error en el método de pago, monto incorrecto…"
+              />
+              {!editAuditNote.trim() && (
+                <p className="text-xs text-red-500 mt-1">Este campo es obligatorio</p>
+              )}
             </div>
 
             <div className="flex gap-2 pt-1">
@@ -478,7 +501,7 @@ export default function SalesHistoryPage() {
               </button>
               <button
                 onClick={handleEdit}
-                disabled={isSaving}
+                disabled={isSaving || !editAuditNote.trim()}
                 className="flex-1 py-2.5 rounded-xl bg-red-700 text-white text-sm font-semibold hover:bg-red-800 disabled:opacity-50"
               >
                 {isSaving ? 'Guardando…' : 'Guardar'}
@@ -518,14 +541,21 @@ export default function SalesHistoryPage() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">Motivo (opcional)</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-1">
+                Motivo de cancelación <span className="text-red-500">*</span>
+              </label>
               <input
                 type="text"
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
-                className="w-full border border-zinc-700 rounded-lg px-3 py-2 text-sm bg-zinc-800 text-zinc-100"
-                placeholder="Ej: Error de cobro, devolución…"
+                className={`w-full border rounded-lg px-3 py-2 text-sm bg-zinc-800 text-zinc-100 ${
+                  cancelReason.trim() ? 'border-zinc-700' : 'border-red-700'
+                }`}
+                placeholder="Ej: Error de cobro, devolución, cliente cambió de opinión…"
               />
+              {!cancelReason.trim() && (
+                <p className="text-xs text-red-500 mt-1">Este campo es obligatorio</p>
+              )}
             </div>
 
             <div className="flex gap-2 pt-1">
@@ -538,7 +568,7 @@ export default function SalesHistoryPage() {
               </button>
               <button
                 onClick={handleCancel}
-                disabled={isSaving}
+                disabled={isSaving || !cancelReason.trim()}
                 className="flex-1 py-2.5 rounded-xl bg-red-700 text-white text-sm font-semibold hover:bg-red-800 disabled:opacity-50"
               >
                 {isSaving ? 'Cancelando…' : 'Confirmar Cancelación'}

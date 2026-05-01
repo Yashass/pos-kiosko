@@ -157,3 +157,21 @@ CREATE POLICY "allow_all_price_history" ON price_history FOR ALL USING (true);
 -- ============================================================
 ALTER TABLE sales ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMPTZ;
 ALTER TABLE sales ADD COLUMN IF NOT EXISTS cancellation_reason TEXT;
+
+-- ============================================================
+-- SALE LOGS (audit trail for edits and cancellations)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS sale_logs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  sale_id UUID REFERENCES sales(id) ON DELETE SET NULL,
+  action TEXT NOT NULL CHECK (action IN ('edit', 'cancel')),
+  changes TEXT,          -- JSON: [{field, old, new}]
+  note TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS sale_logs_sale_id_idx ON sale_logs(sale_id);
+CREATE INDEX IF NOT EXISTS sale_logs_created_at_idx ON sale_logs(created_at);
+
+ALTER TABLE sale_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "allow_all_sale_logs" ON sale_logs FOR ALL USING (true);

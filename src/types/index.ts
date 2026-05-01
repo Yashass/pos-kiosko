@@ -136,6 +136,16 @@ export interface SyncStatus {
   error: string | null;
 }
 
+export interface SaleLog {
+  id: string;
+  sale_id: string;
+  action: 'edit' | 'cancel';
+  changes: string; // JSON: [{field, old, new}]
+  note: string;
+  created_at: string;
+  _synced?: number;
+}
+
 export type PaymentMethod = 'efectivo' | 'tarjeta' | 'transferencia' | 'mixto';
 
 export interface BulkUpdateOptions {

@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import type { Product, Category, Sale, SaleItem, StockMovement, PriceHistory } from '../types';
+import type { Product, Category, Sale, SaleItem, StockMovement, PriceHistory, SaleLog } from '../types';
 
 class PosDatabase extends Dexie {
   products!: Table<Product>;
@@ -8,6 +8,7 @@ class PosDatabase extends Dexie {
   saleItems!: Table<SaleItem>;
   stockMovements!: Table<StockMovement>;
   priceHistory!: Table<PriceHistory>;
+  saleLogs!: Table<SaleLog>;
 
   constructor() {
     super('pos_kiosko_v1');
@@ -30,6 +31,16 @@ class PosDatabase extends Dexie {
     }).upgrade(async (tx) => {
       await tx.table('stockMovements').toCollection().modify({ _synced: 0 });
       await tx.table('priceHistory').toCollection().modify({ _synced: 0 });
+    });
+    // Version 3: add saleLogs table for audit trail
+    this.version(3).stores({
+      products: 'id, barcode, name, category_id, active, _synced, _deleted, updated_at',
+      categories: 'id, name',
+      sales: 'id, created_at, _synced, payment_method',
+      saleItems: 'id, sale_id, product_id, created_at',
+      stockMovements: 'id, product_id, type, created_at, _synced',
+      priceHistory: 'id, product_id, created_at, _synced',
+      saleLogs: 'id, sale_id, action, created_at, _synced',
     });
   }
 }
@@ -85,6 +96,10 @@ export async function getPriceHistory(productId: string): Promise<PriceHistory[]
     .sortBy('created_at');
 }
 
+export async function getAllSaleLogs(): Promise<SaleLog[]> {
+  return db.saleLogs.orderBy('created_at').reverse().toArray();
+}
+
 export async function getUnsyncedSales(): Promise<Sale[]> {
   return db.sales.where('_synced').equals(0).toArray();
 }
@@ -99,4 +114,8 @@ export async function getUnsyncedStockMovements(): Promise<StockMovement[]> {
 
 export async function getUnsyncedPriceHistory(): Promise<PriceHistory[]> {
   return db.priceHistory.where('_synced').equals(0).toArray();
+}
+
+export async function getUnsyncedSaleLogs(): Promise<SaleLog[]> {
+  return db.saleLogs.where('_synced').equals(0).toArray();
 }

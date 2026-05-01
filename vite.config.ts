@@ -11,9 +11,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'icon.svg'],
       manifest: {
-        name: 'POS Kiosco',
+        name: 'POS Kyoskuhin',
         short_name: 'POS',
-        description: 'Sistema de Punto de Venta para Kioscos',
+        description: 'Sistema de Punto de Venta Kyoskuhin',
         theme_color: '#0f172a',
         background_color: '#f8fafc',
         display: 'standalone',

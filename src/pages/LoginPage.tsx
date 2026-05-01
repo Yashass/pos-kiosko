@@ -11,7 +11,7 @@ export default function LoginPage() {
           <div className="w-16 h-16 bg-red-700 rounded-2xl flex items-center justify-center shadow-lg shadow-red-900/40">
             <ShoppingCart size={32} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-zinc-100">POS Kiosco</h1>
+          <h1 className="text-2xl font-bold text-zinc-100">POS Kyoskuhin</h1>
           <p className="text-sm text-zinc-500 text-center">Iniciá sesión para continuar</p>
         </div>
 

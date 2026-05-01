@@ -6,8 +6,9 @@ import {
   getUnsyncedProducts,
   getUnsyncedStockMovements,
   getUnsyncedPriceHistory,
+  getUnsyncedSaleLogs,
 } from './db';
-import type { Product, Category } from '../types';
+import type { Product, Category, Sale, SaleItem } from '../types';
 
 export interface SyncResult {
   ok: boolean;
@@ -124,6 +125,24 @@ async function pushPriceHistory(): Promise<{ pushed: number; error?: string }> {
   return errors.length ? { pushed, error: errors.join(' | ') } : { pushed };
 }
 
+async function pushSaleLogs(): Promise<{ pushed: number; error?: string }> {
+  const unsynced = await getUnsyncedSaleLogs();
+  if (!unsynced.length) return { pushed: 0 };
+
+  let pushed = 0;
+  const errors: string[] = [];
+
+  for (const log of unsynced) {
+    const { _synced: _s, ...data } = log;
+    const { error } = await supabase.from('sale_logs').upsert(data);
+    if (error) { errors.push(error.message); continue; }
+    await db.saleLogs.update(log.id, { _synced: 1 });
+    pushed++;
+  }
+
+  return errors.length ? { pushed, error: errors.join(' | ') } : { pushed };
+}
+
 async function pullProducts(): Promise<{ pulled: number; error?: string }> {
   const { data, error } = await supabase
     .from('products')
@@ -153,6 +172,69 @@ async function pullCategories(): Promise<{ error?: string }> {
   return {};
 }
 
+/** Pull sales from Supabase into IndexedDB. Skips records with unsynced local changes. */
+export async function pullSales(from?: Date, to?: Date): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let query: any = supabase
+      .from('sales')
+      .select('*, sale_items(*)')
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    if (from) query = query.gte('created_at', from.toISOString());
+    if (to) query = query.lte('created_at', to.toISOString());
+
+    const { data, error } = await query;
+    if (error || !data) return;
+
+    for (const row of data as (Sale & { sale_items?: SaleItem[] })[]) {
+      const { sale_items: remoteItems, ...saleData } = row as Sale & { sale_items?: SaleItem[] };
+
+      // Don't overwrite locally modified (unsynced) records
+      const local = await db.sales.get(saleData.id);
+      if (local?._synced === 0) continue;
+
+      await db.sales.put({ ...saleData, _synced: 1 });
+
+      if (remoteItems?.length) {
+        for (const item of remoteItems) {
+          const localItem = await db.saleItems.get(item.id);
+          if (!localItem) {
+            await db.saleItems.put(item);
+          }
+        }
+      }
+    }
+  } catch {
+    // offline – no-op
+  }
+}
+
+/** Pull sale_logs from Supabase into IndexedDB (only inserts missing records). */
+export async function pullSaleLogs(): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  try {
+    const { data, error } = await supabase
+      .from('sale_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    if (error || !data) return;
+
+    for (const log of data) {
+      const local = await db.saleLogs.get(log.id);
+      if (!local) {
+        await db.saleLogs.put({ ...log, _synced: 1 });
+      }
+    }
+  } catch {
+    // offline – no-op
+  }
+}
+
 export async function runSync(): Promise<SyncResult> {
   if (!isSupabaseConfigured()) {
     return { ok: false, pushed: 0, pulled: 0, error: 'Supabase no configurado — revisá el archivo .env' };
@@ -169,13 +251,14 @@ export async function runSync(): Promise<SyncResult> {
     const productsRes = await pushProducts();
     const stockRes = await pushStockMovements();
     const priceRes = await pushPriceHistory();
+    const logsRes = await pushSaleLogs();
     const catsRes = await pullCategories();
     const pullRes = await pullProducts();
 
-    const pushed = salesRes.pushed + productsRes.pushed + stockRes.pushed + priceRes.pushed;
+    const pushed = salesRes.pushed + productsRes.pushed + stockRes.pushed + priceRes.pushed + logsRes.pushed;
     const firstError =
       salesRes.error ?? productsRes.error ?? stockRes.error ?? priceRes.error ??
-      catsRes.error ?? pullRes.error;
+      logsRes.error ?? catsRes.error ?? pullRes.error;
 
     return {
       ok: !firstError,
