@@ -21,35 +21,35 @@ export default function StockWidget() {
       {/* Header summary */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-3xl font-bold text-slate-800">{totalUnits.toLocaleString('es-AR')}</p>
-          <p className="text-xs text-slate-500 mt-0.5">unidades en {total} productos</p>
+          <p className="text-3xl font-bold text-zinc-100">{totalUnits.toLocaleString('es-AR')}</p>
+          <p className="text-xs text-zinc-500 mt-0.5">unidades en {total} productos</p>
         </div>
-        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
-          <Package size={16} className="text-blue-600" />
+        <div className="w-8 h-8 bg-red-900/30 rounded-lg flex items-center justify-center shrink-0">
+          <Package size={16} className="text-red-500" />
         </div>
       </div>
 
       {/* Low stock section */}
       {lowStock.length > 0 && (
-        <div className="rounded-lg overflow-hidden border border-amber-100">
+        <div className="rounded-lg overflow-hidden border border-amber-900/50">
           <button
             onClick={() => setShowLow((v) => !v)}
-            className="w-full flex items-center justify-between px-3 py-2 bg-amber-50 hover:bg-amber-100 transition-colors"
+            className="w-full flex items-center justify-between px-3 py-2 bg-amber-950/20 hover:bg-amber-950/30 transition-colors"
           >
             <div className="flex items-center gap-2">
               <AlertTriangle size={13} className="text-amber-500" />
-              <span className="text-xs font-semibold text-amber-700">
+              <span className="text-xs font-semibold text-amber-400">
                 {lowStock.length} con stock bajo
               </span>
             </div>
             {showLow ? <ChevronUp size={13} className="text-amber-500" /> : <ChevronDown size={13} className="text-amber-500" />}
           </button>
           {showLow && (
-            <div className="divide-y divide-amber-50 bg-white">
+            <div className="divide-y divide-zinc-800 bg-zinc-900">
               {lowStock.map((p) => (
                 <div key={p.id} className="flex items-center justify-between px-3 py-1.5">
-                  <span className="text-xs text-slate-600 truncate mr-2">{p.name}</span>
-                  <span className="text-xs font-bold text-amber-600 shrink-0">
+                  <span className="text-xs text-zinc-400 truncate mr-2">{p.name}</span>
+                  <span className="text-xs font-bold text-amber-500 shrink-0">
                     {p.stock} / {p.min_stock}
                   </span>
                 </div>
@@ -61,25 +61,25 @@ export default function StockWidget() {
 
       {/* Out of stock section */}
       {outOfStock.length > 0 && (
-        <div className="rounded-lg overflow-hidden border border-red-100">
+        <div className="rounded-lg overflow-hidden border border-red-900/50">
           <button
             onClick={() => setShowOut((v) => !v)}
-            className="w-full flex items-center justify-between px-3 py-2 bg-red-50 hover:bg-red-100 transition-colors"
+            className="w-full flex items-center justify-between px-3 py-2 bg-red-950/20 hover:bg-red-950/30 transition-colors"
           >
             <div className="flex items-center gap-2">
               <XCircle size={13} className="text-red-500" />
-              <span className="text-xs font-semibold text-red-700">
+              <span className="text-xs font-semibold text-red-400">
                 {outOfStock.length} sin stock
               </span>
             </div>
             {showOut ? <ChevronUp size={13} className="text-red-500" /> : <ChevronDown size={13} className="text-red-500" />}
           </button>
           {showOut && (
-            <div className="divide-y divide-red-50 bg-white">
+            <div className="divide-y divide-zinc-800 bg-zinc-900">
               {outOfStock.map((p) => (
                 <div key={p.id} className="flex items-center justify-between px-3 py-1.5">
-                  <span className="text-xs text-slate-600 truncate mr-2">{p.name}</span>
-                  <span className="text-xs font-bold text-red-600 shrink-0">0</span>
+                  <span className="text-xs text-zinc-400 truncate mr-2">{p.name}</span>
+                  <span className="text-xs font-bold text-red-500 shrink-0">0</span>
                 </div>
               ))}
             </div>
@@ -89,9 +89,9 @@ export default function StockWidget() {
 
       {/* All good */}
       {lowStock.length === 0 && outOfStock.length === 0 && (
-        <div className="flex items-center gap-2 bg-emerald-50 rounded-lg px-3 py-2">
+        <div className="flex items-center gap-2 bg-emerald-950/20 rounded-lg px-3 py-2">
           <Package size={14} className="text-emerald-500" />
-          <span className="text-xs text-emerald-700 font-medium">Stock en buen estado</span>
+          <span className="text-xs text-emerald-400 font-medium">Stock en buen estado</span>
         </div>
       )}
     </div>

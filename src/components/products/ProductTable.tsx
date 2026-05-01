@@ -74,14 +74,14 @@ export default function ProductTable({ products, selectable, selected = [], onSe
 
   function SortIcon({ col }: { col: SortKey }) {
     if (sortKey !== col) return <ChevronUp size={12} className="opacity-20" />;
-    return sortAsc ? <ChevronUp size={12} className="text-blue-600" /> : <ChevronDown size={12} className="text-blue-600" />;
+    return sortAsc ? <ChevronUp size={12} className="text-red-500" /> : <ChevronDown size={12} className="text-red-500" />;
   }
 
   function Th({ col, label, className = '' }: { col: SortKey; label: string; className?: string }) {
     return (
       <th
         onClick={() => toggleSort(col)}
-        className={`px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-800 select-none ${className}`}
+        className={`px-3 py-2 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wide cursor-pointer hover:text-zinc-200 select-none ${className}`}
       >
         <span className="flex items-center gap-1">{label}<SortIcon col={col} /></span>
       </th>
@@ -93,20 +93,20 @@ export default function ProductTable({ products, selectable, selected = [], onSe
       {/* Filters */}
       <div className="flex gap-2 flex-wrap">
         <div className="relative flex-1 min-w-[180px]">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por nombre o código…"
-            className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-9 pr-3 py-2 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 bg-zinc-900 text-zinc-100"
           />
         </div>
         <button
           onClick={() => setFilterLowStock(!filterLowStock)}
           className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border transition-colors ${
             filterLowStock
-              ? 'bg-amber-50 border-amber-300 text-amber-700'
-              : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+              ? 'bg-amber-950/30 border-amber-700 text-amber-400'
+              : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-500'
           }`}
         >
           <Filter size={14} />
@@ -114,12 +114,12 @@ export default function ProductTable({ products, selectable, selected = [], onSe
         </button>
       </div>
 
-      <p className="text-xs text-slate-500">{filtered.length} productos</p>
+      <p className="text-xs text-zinc-500">{filtered.length} productos</p>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-slate-200">
+          <thead className="bg-zinc-800 border-b border-zinc-700">
             <tr>
               {selectable && (
                 <th className="px-3 py-2">
@@ -132,16 +132,16 @@ export default function ProductTable({ products, selectable, selected = [], onSe
                 </th>
               )}
               <Th col="name" label="Producto" />
-              <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Código</th>
+              <th className="px-3 py-2 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wide">Código</th>
               <Th col="cost" label="Costo" className="text-right" />
               <Th col="price" label="Precio" className="text-right" />
-              <th className="px-3 py-2 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Precio s/IVA</th>
+              <th className="px-3 py-2 text-right text-xs font-semibold text-zinc-500 uppercase tracking-wide">Precio s/IVA</th>
               <Th col="margin" label="Margen" className="text-right" />
               <Th col="stock" label="Stock" className="text-right" />
               <th className="px-3 py-2" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-zinc-800">
             {filtered.map((product) => {
               const netPrice = calcNetPrice(product.price, product.tax_rate);
               const margin = calcMarginPct(product.price, product.cost, product.tax_rate);
@@ -152,7 +152,7 @@ export default function ProductTable({ products, selectable, selected = [], onSe
               return (
                 <tr
                   key={product.id}
-                  className={`hover:bg-slate-50 transition-colors ${isSelected ? 'bg-blue-50' : ''}`}
+                  className={`hover:bg-zinc-800 transition-colors ${isSelected ? 'bg-red-950/20' : ''}`}
                 >
                   {selectable && (
                     <td className="px-3 py-2">
@@ -166,42 +166,42 @@ export default function ProductTable({ products, selectable, selected = [], onSe
                   )}
                   <td className="px-3 py-2.5">
                     <div>
-                      <p className="font-medium text-slate-800">{product.name}</p>
+                      <p className="font-medium text-zinc-100">{product.name}</p>
                       {product.category && (
-                        <p className="text-xs text-slate-400">{product.category.name}</p>
+                        <p className="text-xs text-zinc-500">{product.category.name}</p>
                       )}
                     </div>
                   </td>
-                  <td className="px-3 py-2.5 text-xs text-slate-500 font-mono">{product.barcode ?? '—'}</td>
-                  <td className="px-3 py-2.5 text-right">{formatCurrency(product.cost)}</td>
-                  <td className="px-3 py-2.5 text-right font-semibold">{formatCurrency(product.price)}</td>
-                  <td className="px-3 py-2.5 text-right text-slate-500">{formatCurrency(netPrice)}</td>
+                  <td className="px-3 py-2.5 text-xs text-zinc-500 font-mono">{product.barcode ?? '—'}</td>
+                  <td className="px-3 py-2.5 text-right text-zinc-300">{formatCurrency(product.cost)}</td>
+                  <td className="px-3 py-2.5 text-right font-semibold text-zinc-100">{formatCurrency(product.price)}</td>
+                  <td className="px-3 py-2.5 text-right text-zinc-500">{formatCurrency(netPrice)}</td>
                   <td className="px-3 py-2.5 text-right">
-                    <span className={`font-semibold ${margin >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                    <span className={`font-semibold ${margin >= 0 ? 'text-emerald-400' : 'text-red-500'}`}>
                       {margin.toFixed(1)}%
                     </span>
-                    <p className="text-xs text-slate-400">{formatCurrency(profitNet)}</p>
+                    <p className="text-xs text-zinc-500">{formatCurrency(profitNet)}</p>
                   </td>
                   <td className="px-3 py-2.5 text-right">
                     <div className="flex items-center justify-end gap-1">
                       {isLowStock && <AlertTriangle size={13} className="text-amber-500" />}
-                      <span className={isLowStock ? 'text-amber-600 font-semibold' : 'text-slate-700'}>
+                      <span className={isLowStock ? 'text-amber-500 font-semibold' : 'text-zinc-300'}>
                         {product.stock}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400">mín. {product.min_stock}</p>
+                    <p className="text-xs text-zinc-500">mín. {product.min_stock}</p>
                   </td>
                   <td className="px-3 py-2.5">
                     <div className="flex gap-1">
                       <button
                         onClick={() => navigate(`/productos/${product.id}`)}
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 rounded-lg transition-colors"
                       >
                         <Edit size={15} />
                       </button>
                       <button
                         onClick={() => handleDelete(product)}
-                        className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 text-red-500 hover:bg-red-950/30 rounded-lg transition-colors"
                       >
                         <Trash2 size={15} />
                       </button>
@@ -212,7 +212,7 @@ export default function ProductTable({ products, selectable, selected = [], onSe
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-3 py-8 text-center text-slate-400 text-sm">
+                <td colSpan={9} className="px-3 py-8 text-center text-zinc-500 text-sm">
                   No se encontraron productos
                 </td>
               </tr>

@@ -83,7 +83,7 @@ export default function DashboardGrid() {
       <div className="flex items-center gap-2">
         <button
           onClick={() => setConfigOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-zinc-400 border border-zinc-700 rounded-lg hover:bg-zinc-800 transition-colors"
         >
           <Settings size={15} />
           <span>Personalizar</span>
@@ -95,8 +95,8 @@ export default function DashboardGrid() {
               onClick={handleSave}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border transition-colors ${
                 hasUnsavedChanges
-                  ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
-                  : 'text-slate-400 border-slate-200 cursor-default'
+                  ? 'bg-red-700 text-white border-red-700 hover:bg-red-800'
+                  : 'text-zinc-600 border-zinc-700 cursor-default'
               }`}
               disabled={!hasUnsavedChanges}
               title="Guardar diseño actual"
@@ -107,7 +107,7 @@ export default function DashboardGrid() {
 
             <button
               onClick={handleReset}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-zinc-400 border border-zinc-700 rounded-lg hover:bg-zinc-800 transition-colors"
               title="Restablecer al último diseño guardado"
             >
               <RotateCcw size={15} />
@@ -133,12 +133,12 @@ export default function DashboardGrid() {
           return (
             <div
               key={w.id}
-              className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col"
+              className="bg-zinc-900 rounded-xl border border-zinc-800 shadow-sm overflow-hidden flex flex-col"
             >
-              <div className="drag-handle flex items-center justify-between px-3 py-1.5 border-b border-slate-100 bg-slate-50 cursor-grab active:cursor-grabbing">
+              <div className="drag-handle flex items-center justify-between px-3 py-1.5 border-b border-zinc-800 bg-zinc-800 cursor-grab active:cursor-grabbing">
                 <div className="flex items-center gap-1.5">
-                  <GripVertical size={13} className="text-slate-300" />
-                  <span className="text-xs font-medium text-slate-500">{WIDGET_LABELS[w.id]}</span>
+                  <GripVertical size={13} className="text-zinc-600" />
+                  <span className="text-xs font-medium text-zinc-500">{WIDGET_LABELS[w.id]}</span>
                 </div>
               </div>
               <div className="flex-1 overflow-hidden">
@@ -151,45 +151,45 @@ export default function DashboardGrid() {
 
       {/* Config modal */}
       {configOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
-            <div className="flex items-center justify-between px-5 py-4 border-b">
-              <h3 className="font-bold text-slate-800">Personalizar Dashboard</h3>
-              <button onClick={() => setConfigOpen(false)} className="p-1 hover:bg-slate-100 rounded-lg">
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-sm border border-zinc-800">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
+              <h3 className="font-bold text-zinc-100">Personalizar Dashboard</h3>
+              <button onClick={() => setConfigOpen(false)} className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-400">
                 <X size={18} />
               </button>
             </div>
             <div className="p-5 space-y-2">
-              <p className="text-xs text-slate-500 mb-3">
+              <p className="text-xs text-zinc-500 mb-3">
                 Activá o desactivá los widgets. En desktop podés arrastrarlos y redimensionarlos.
               </p>
               {widgets.map((w) => (
                 <label key={w.id} className="flex items-center gap-3 py-2 cursor-pointer">
                   <div
-                    className={`w-10 h-5 rounded-full transition-colors relative ${w.enabled ? 'bg-blue-600' : 'bg-slate-200'}`}
+                    className={`w-10 h-5 rounded-full transition-colors relative ${w.enabled ? 'bg-red-700' : 'bg-zinc-700'}`}
                     onClick={() => toggleWidget(w.id)}
                   >
                     <div
                       className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform shadow ${w.enabled ? 'translate-x-5' : 'translate-x-0.5'}`}
                     />
                   </div>
-                  <span className={`text-sm ${w.enabled ? 'text-slate-800 font-medium' : 'text-slate-400'}`}>
+                  <span className={`text-sm ${w.enabled ? 'text-zinc-100 font-medium' : 'text-zinc-600'}`}>
                     {WIDGET_LABELS[w.id]}
                   </span>
                 </label>
               ))}
             </div>
-            <div className="px-5 py-4 border-t flex gap-2">
+            <div className="px-5 py-4 border-t border-zinc-800 flex gap-2">
               <button
                 onClick={() => { handleReset(); setConfigOpen(false); }}
-                className="flex-1 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center justify-center gap-1.5"
+                className="flex-1 py-2 text-sm text-zinc-400 border border-zinc-700 rounded-lg hover:bg-zinc-800 flex items-center justify-center gap-1.5"
               >
                 <RotateCcw size={13} />
                 Restablecer
               </button>
               <button
                 onClick={() => { handleSave(); setConfigOpen(false); }}
-                className="flex-1 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold flex items-center justify-center gap-1.5"
+                className="flex-1 py-2 text-sm bg-red-700 text-white rounded-lg hover:bg-red-800 font-semibold flex items-center justify-center gap-1.5"
               >
                 <Save size={13} />
                 Guardar y cerrar

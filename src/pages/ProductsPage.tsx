@@ -19,14 +19,14 @@ export default function ProductsPage() {
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">Productos</h1>
-          <p className="text-sm text-slate-500">{products.length} productos activos</p>
+          <h1 className="text-xl font-bold text-zinc-100">Productos</h1>
+          <p className="text-sm text-zinc-500">{products.length} productos activos</p>
         </div>
         <div className="flex gap-2">
           {selected.length > 0 && (
             <button
               onClick={() => setBulkModalOpen(true)}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
             >
               <Tag size={16} />
               Actualizar precios ({selected.length})
@@ -34,7 +34,7 @@ export default function ProductsPage() {
           )}
           <button
             onClick={() => navigate('/productos/nuevo')}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-red-700 text-white rounded-lg hover:bg-red-800 transition-colors"
           >
             <Plus size={16} />
             Nuevo producto
@@ -43,8 +43,8 @@ export default function ProductsPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-16 text-slate-400">
-          <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full" />
+        <div className="flex items-center justify-center py-16 text-zinc-500">
+          <div className="animate-spin w-6 h-6 border-2 border-red-700 border-t-transparent rounded-full" />
         </div>
       ) : (
         <ProductTable

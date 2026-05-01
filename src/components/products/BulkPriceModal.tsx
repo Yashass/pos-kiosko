@@ -47,16 +47,16 @@ export default function BulkPriceModal({ selectedIds, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="font-bold text-slate-800">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+      <div className="bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-zinc-800">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
+          <h2 className="font-bold text-zinc-100">
             Actualización masiva de precios
-            <span className="ml-2 text-sm font-normal text-slate-500">
+            <span className="ml-2 text-sm font-normal text-zinc-500">
               ({selectedIds.length} productos)
             </span>
           </h2>
-          <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg">
+          <button onClick={onClose} className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-400">
             <X size={20} />
           </button>
         </div>
@@ -64,7 +64,7 @@ export default function BulkPriceModal({ selectedIds, onClose }: Props) {
         <div className="p-6 space-y-5 overflow-auto">
           {/* Field selector */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700">¿Qué actualizar?</label>
+            <label className="text-sm font-semibold text-zinc-300">¿Qué actualizar?</label>
             <div className="grid grid-cols-3 gap-2">
               {(['cost', 'price', 'both'] as const).map((f) => (
                 <button
@@ -72,8 +72,8 @@ export default function BulkPriceModal({ selectedIds, onClose }: Props) {
                   onClick={() => setField(f)}
                   className={`py-2 px-3 rounded-lg text-sm border font-medium transition-colors ${
                     field === f
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
+                      ? 'bg-red-700 text-white border-red-700'
+                      : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-red-700'
                   }`}
                 >
                   {f === 'cost' ? 'Solo costo' : f === 'price' ? 'Solo precio' : 'Ambos'}
@@ -84,7 +84,7 @@ export default function BulkPriceModal({ selectedIds, onClose }: Props) {
 
           {/* Percentage input */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700">Porcentaje de cambio</label>
+            <label className="text-sm font-semibold text-zinc-300">Porcentaje de cambio</label>
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <input
@@ -92,16 +92,16 @@ export default function BulkPriceModal({ selectedIds, onClose }: Props) {
                   value={percentage}
                   onChange={(e) => setPercentage(e.target.value)}
                   placeholder="Ej: 15 (aumento) o -10 (descuento)"
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 bg-zinc-800 text-zinc-100"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-semibold">%</span>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 font-semibold">%</span>
               </div>
               <div className="flex gap-1">
                 {[5, 10, 15, 20, 25].map((v) => (
                   <button
                     key={v}
                     onClick={() => setPercentage(String(v))}
-                    className="px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 rounded-lg font-medium"
+                    className="px-2 py-1 text-xs bg-zinc-800 hover:bg-zinc-700 rounded-lg font-medium text-zinc-300 border border-zinc-700"
                   >
                     +{v}%
                   </button>
@@ -109,7 +109,7 @@ export default function BulkPriceModal({ selectedIds, onClose }: Props) {
               </div>
             </div>
             {pct > 0 && (
-              <div className="flex items-center gap-1 text-xs text-emerald-600">
+              <div className="flex items-center gap-1 text-xs text-emerald-400">
                 <TrendingUp size={13} />
                 Aumento del {pct}%
               </div>
@@ -131,38 +131,38 @@ export default function BulkPriceModal({ selectedIds, onClose }: Props) {
                 onChange={(e) => setRecalculatePrice(e.target.checked)}
                 className="rounded"
               />
-              <span className="text-sm text-slate-700">Recalcular precio manteniendo el mismo margen de ganancia</span>
+              <span className="text-sm text-zinc-300">Recalcular precio manteniendo el mismo margen de ganancia</span>
             </label>
           )}
 
           {/* Preview */}
           {pct !== 0 && selectedProducts.length > 0 && (
             <div className="space-y-2">
-              <p className="text-sm font-semibold text-slate-700">Vista previa</p>
-              <div className="overflow-auto max-h-48 rounded-lg border border-slate-200">
+              <p className="text-sm font-semibold text-zinc-300">Vista previa</p>
+              <div className="overflow-auto max-h-48 rounded-lg border border-zinc-700">
                 <table className="w-full text-xs">
-                  <thead className="bg-slate-50 sticky top-0">
+                  <thead className="bg-zinc-800 sticky top-0">
                     <tr>
-                      <th className="px-3 py-2 text-left font-semibold text-slate-500">Producto</th>
-                      <th className="px-3 py-2 text-right font-semibold text-slate-500">Costo actual → nuevo</th>
-                      <th className="px-3 py-2 text-right font-semibold text-slate-500">Precio actual → nuevo</th>
+                      <th className="px-3 py-2 text-left font-semibold text-zinc-500">Producto</th>
+                      <th className="px-3 py-2 text-right font-semibold text-zinc-500">Costo actual → nuevo</th>
+                      <th className="px-3 py-2 text-right font-semibold text-zinc-500">Precio actual → nuevo</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-zinc-800">
                     {selectedProducts.map((p) => {
                       const { newCost, newPrice } = previewPrice(p);
                       return (
                         <tr key={p.id}>
-                          <td className="px-3 py-1.5 font-medium text-slate-700">{p.name}</td>
+                          <td className="px-3 py-1.5 font-medium text-zinc-300">{p.name}</td>
                           <td className="px-3 py-1.5 text-right">
-                            <span className="text-slate-400">{formatCurrency(p.cost)}</span>
+                            <span className="text-zinc-500">{formatCurrency(p.cost)}</span>
                             {' → '}
-                            <span className="font-semibold text-slate-800">{formatCurrency(newCost)}</span>
+                            <span className="font-semibold text-zinc-100">{formatCurrency(newCost)}</span>
                           </td>
                           <td className="px-3 py-1.5 text-right">
-                            <span className="text-slate-400">{formatCurrency(p.price)}</span>
+                            <span className="text-zinc-500">{formatCurrency(p.price)}</span>
                             {' → '}
-                            <span className="font-semibold text-slate-800">{formatCurrency(newPrice)}</span>
+                            <span className="font-semibold text-zinc-100">{formatCurrency(newPrice)}</span>
                           </td>
                         </tr>
                       );
@@ -173,25 +173,25 @@ export default function BulkPriceModal({ selectedIds, onClose }: Props) {
             </div>
           )}
 
-          <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <AlertCircle size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-amber-700">
+          <div className="flex items-start gap-2 bg-amber-950/20 border border-amber-900/50 rounded-lg p-3">
+            <AlertCircle size={16} className="text-amber-500 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-amber-400">
               Esta acción actualizará los precios de los productos seleccionados. Se guardará un historial de cambios.
             </p>
           </div>
         </div>
 
-        <div className="px-6 py-4 border-t flex justify-end gap-2">
+        <div className="px-6 py-4 border-t border-zinc-800 flex justify-end gap-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50"
+            className="px-4 py-2 text-sm text-zinc-400 border border-zinc-700 rounded-lg hover:bg-zinc-800"
           >
             Cancelar
           </button>
           <button
             onClick={handleApply}
             disabled={!pct || !selectedIds.length || loading}
-            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-semibold"
+            className="px-4 py-2 text-sm bg-red-700 text-white rounded-lg hover:bg-red-800 disabled:opacity-50 font-semibold"
           >
             {loading ? 'Aplicando…' : 'Aplicar cambios'}
           </button>

@@ -56,7 +56,6 @@ export default function SalesPage() {
     const barcode = search.trim();
     if (!barcode) return;
 
-    // Intentar como código de barras exacto
     const product = await getProductByBarcode(barcode);
     if (product) {
       addToCart(product);
@@ -77,27 +76,27 @@ export default function SalesPage() {
   return (
     <div className="flex flex-col md:flex-row h-full">
       {/* Product search panel */}
-      <div className="flex-1 flex flex-col p-4 md:border-r border-slate-200 md:max-w-md lg:max-w-lg">
-        <h1 className="text-xl font-bold text-slate-800 mb-4">Nueva Venta</h1>
+      <div className="flex-1 flex flex-col p-4 md:border-r border-zinc-800 md:max-w-md lg:max-w-lg">
+        <h1 className="text-xl font-bold text-zinc-100 mb-4">Nueva Venta</h1>
 
         {/* Search bar */}
         <div className="relative">
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
               <input
                 ref={inputRef}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={handleManualBarcode}
                 placeholder="Buscar producto o ingresar código de barras…"
-                className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full pl-9 pr-3 py-2.5 border border-zinc-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-600 bg-zinc-900 text-zinc-100"
                 autoFocus
               />
               {search && (
                 <button
                   onClick={() => { setSearch(''); setShowResults(false); }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
                 >
                   <X size={14} />
                 </button>
@@ -105,7 +104,7 @@ export default function SalesPage() {
             </div>
             <button
               onClick={() => setScannerOpen(true)}
-              className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 bg-red-700 text-white rounded-xl text-sm font-medium hover:bg-red-800 transition-colors"
             >
               <ScanLine size={18} />
               <span className="hidden sm:inline">Escanear</span>
@@ -114,21 +113,21 @@ export default function SalesPage() {
 
           {/* Dropdown results */}
           {showResults && results.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-10 overflow-hidden">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-900 border border-zinc-700 rounded-xl shadow-lg z-10 overflow-hidden">
               {results.map((product) => (
                 <button
                   key={product.id}
                   onClick={() => selectProduct(product)}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-slate-50 last:border-0"
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 transition-colors text-left border-b border-zinc-800 last:border-0"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-slate-800 truncate">{product.name}</p>
-                    <p className="text-xs text-slate-400">
+                    <p className="font-medium text-sm text-zinc-100 truncate">{product.name}</p>
+                    <p className="text-xs text-zinc-500">
                       {product.barcode && <span className="font-mono mr-2">{product.barcode}</span>}
                       Stock: {product.stock}
                     </p>
                   </div>
-                  <span className="font-bold text-slate-800 text-sm flex-shrink-0">
+                  <span className="font-bold text-zinc-100 text-sm flex-shrink-0">
                     {formatCurrency(product.price)}
                   </span>
                 </button>
@@ -139,7 +138,7 @@ export default function SalesPage() {
 
         {/* Product grid (frequent items) */}
         <div className="mt-4 flex-1 overflow-auto">
-          <p className="text-xs text-slate-500 mb-2 font-medium uppercase tracking-wide">Productos</p>
+          <p className="text-xs text-zinc-500 mb-2 font-medium uppercase tracking-wide">Productos</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {products
               .filter((p) => !search || p.name.toLowerCase().includes(search.toLowerCase()))
@@ -148,13 +147,13 @@ export default function SalesPage() {
                 <button
                   key={product.id}
                   onClick={() => selectProduct(product)}
-                  className="flex flex-col items-start p-3 bg-white border border-slate-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all text-left group"
+                  className="flex flex-col items-start p-3 bg-zinc-900 border border-zinc-700 rounded-xl hover:border-red-700 hover:bg-zinc-800 transition-all text-left group"
                 >
-                  <p className="text-xs font-semibold text-slate-700 truncate w-full group-hover:text-blue-700">
+                  <p className="text-xs font-semibold text-zinc-300 truncate w-full group-hover:text-red-400">
                     {product.name}
                   </p>
-                  <p className="text-sm font-bold text-slate-900 mt-1">{formatCurrency(product.price)}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">Stock: {product.stock}</p>
+                  <p className="text-sm font-bold text-zinc-100 mt-1">{formatCurrency(product.price)}</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Stock: {product.stock}</p>
                 </button>
               ))}
           </div>
@@ -162,9 +161,9 @@ export default function SalesPage() {
       </div>
 
       {/* Cart panel */}
-      <div className="md:w-80 lg:w-96 border-t md:border-t-0 md:border-l border-slate-200 bg-white flex flex-col max-h-[50vh] md:max-h-full">
-        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
-          <h2 className="font-bold text-slate-700">Carrito</h2>
+      <div className="md:w-80 lg:w-96 border-t md:border-t-0 md:border-l border-zinc-800 bg-zinc-900 flex flex-col max-h-[50vh] md:max-h-full">
+        <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-800">
+          <h2 className="font-bold text-zinc-200">Carrito</h2>
         </div>
         <div className="flex-1 overflow-auto">
           <Cart />

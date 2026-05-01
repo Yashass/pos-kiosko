@@ -110,22 +110,22 @@ export default function ProductFormPage() {
       <div className="flex items-center gap-3">
         <button
           onClick={() => navigate('/productos')}
-          className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400"
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-xl font-bold text-slate-800">
+        <h1 className="text-xl font-bold text-zinc-100">
           {isEditing ? 'Editar producto' : 'Nuevo producto'}
         </h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Basic info */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-4">
-          <h2 className="font-semibold text-slate-700">Información general</h2>
+        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 space-y-4">
+          <h2 className="font-semibold text-zinc-300">Información general</h2>
 
           <div className="space-y-1">
-            <label className="text-sm font-medium text-slate-600">Nombre *</label>
+            <label className="text-sm font-medium text-zinc-400">Nombre *</label>
             <input
               value={form.name}
               onChange={(e) => set('name', e.target.value)}
@@ -137,7 +137,7 @@ export default function ProductFormPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-600">Código de barras</label>
+              <label className="text-sm font-medium text-zinc-400">Código de barras</label>
               <div className="flex gap-1.5">
                 <input
                   value={form.barcode ?? ''}
@@ -149,14 +149,14 @@ export default function ProductFormPage() {
                   type="button"
                   onClick={() => setScannerOpen(true)}
                   title="Escanear código de barras"
-                  className="flex-shrink-0 px-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex-shrink-0 px-2.5 bg-red-700 text-white rounded-lg hover:bg-red-800 transition-colors"
                 >
                   <ScanLine size={16} />
                 </button>
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-600">Categoría</label>
+              <label className="text-sm font-medium text-zinc-400">Categoría</label>
               <select
                 value={form.category_id ?? ''}
                 onChange={(e) => set('category_id', e.target.value)}
@@ -172,7 +172,7 @@ export default function ProductFormPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-600">Unidad</label>
+              <label className="text-sm font-medium text-zinc-400">Unidad</label>
               <select value={form.unit} onChange={(e) => set('unit', e.target.value)} className="input">
                 {['unidad', 'kg', 'g', 'litro', 'ml', 'pack'].map((u) => (
                   <option key={u} value={u}>{u}</option>
@@ -180,7 +180,7 @@ export default function ProductFormPage() {
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-600">Fecha de ingreso</label>
+              <label className="text-sm font-medium text-zinc-400">Fecha de ingreso</label>
               <input
                 type="date"
                 value={form.entry_date}
@@ -192,14 +192,14 @@ export default function ProductFormPage() {
         </div>
 
         {/* Pricing */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-4">
-          <h2 className="font-semibold text-slate-700">Precio y costos</h2>
+        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 space-y-4">
+          <h2 className="font-semibold text-zinc-300">Precio y costos</h2>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-600">Costo *</label>
+              <label className="text-sm font-medium text-zinc-400">Costo *</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 font-medium">$</span>
                 <input
                   type="number"
                   step="0.01"
@@ -212,7 +212,7 @@ export default function ProductFormPage() {
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-600">IVA (%)</label>
+              <label className="text-sm font-medium text-zinc-400">IVA (%)</label>
               <select
                 value={form.tax_rate}
                 onChange={(e) => set('tax_rate', parseFloat(e.target.value))}
@@ -227,8 +227,8 @@ export default function ProductFormPage() {
           </div>
 
           {/* Margin helper */}
-          <div className="bg-slate-50 rounded-lg p-3 space-y-2">
-            <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-600">
+          <div className="bg-zinc-800 rounded-lg p-3 space-y-2">
+            <label className="flex items-center gap-2 cursor-pointer text-sm text-zinc-400">
               <input
                 type="checkbox"
                 checked={useMargin}
@@ -248,12 +248,12 @@ export default function ProductFormPage() {
                     placeholder="Margen % sobre costo"
                     className="input pr-8"
                   />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">%</span>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
                 </div>
                 <button
                   type="button"
                   onClick={applyMargin}
-                  className="flex items-center gap-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                  className="flex items-center gap-1 px-3 py-2 bg-red-700 text-white rounded-lg text-sm hover:bg-red-800"
                 >
                   <Calculator size={14} />
                   Calcular
@@ -263,9 +263,9 @@ export default function ProductFormPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm font-medium text-slate-600">Precio de venta (con IVA incluido) *</label>
+            <label className="text-sm font-medium text-zinc-400">Precio de venta (con IVA incluido) *</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 font-medium">$</span>
               <input
                 type="number"
                 step="0.01"
@@ -282,25 +282,25 @@ export default function ProductFormPage() {
           {/* Profit preview */}
           {form.price > 0 && form.cost > 0 && (
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-slate-50 rounded-lg p-2.5">
-                <p className="text-slate-500">Precio sin IVA</p>
-                <p className="font-bold text-slate-700">{formatCurrency(netPrice)}</p>
+              <div className="bg-zinc-800 rounded-lg p-2.5">
+                <p className="text-zinc-500">Precio sin IVA</p>
+                <p className="font-bold text-zinc-300">{formatCurrency(netPrice)}</p>
               </div>
-              <div className="bg-slate-50 rounded-lg p-2.5">
-                <p className="text-slate-500">IVA en el precio</p>
-                <p className="font-bold text-blue-600">{formatCurrency(taxInPrice)}</p>
+              <div className="bg-zinc-800 rounded-lg p-2.5">
+                <p className="text-zinc-500">IVA en el precio</p>
+                <p className="font-bold text-amber-400">{formatCurrency(taxInPrice)}</p>
               </div>
-              <div className="bg-slate-50 rounded-lg p-2.5">
-                <p className="text-slate-500">Ganancia bruta</p>
-                <p className={`font-bold ${profitGross >= 0 ? 'text-slate-700' : 'text-red-500'}`}>
+              <div className="bg-zinc-800 rounded-lg p-2.5">
+                <p className="text-zinc-500">Ganancia bruta</p>
+                <p className={`font-bold ${profitGross >= 0 ? 'text-zinc-300' : 'text-red-500'}`}>
                   {formatCurrency(profitGross)}
                 </p>
               </div>
-              <div className={`rounded-lg p-2.5 ${profitNet >= 0 ? 'bg-emerald-50' : 'bg-red-50'}`}>
-                <p className="text-slate-500">Ganancia neta (sin IVA)</p>
-                <p className={`font-bold ${profitNet >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+              <div className={`rounded-lg p-2.5 ${profitNet >= 0 ? 'bg-emerald-950/30' : 'bg-red-950/30'}`}>
+                <p className="text-zinc-500">Ganancia neta (sin IVA)</p>
+                <p className={`font-bold ${profitNet >= 0 ? 'text-emerald-400' : 'text-red-500'}`}>
                   {formatCurrency(profitNet)}
-                  <span className="font-normal text-slate-400 ml-1">({margin.toFixed(1)}%)</span>
+                  <span className="font-normal text-zinc-500 ml-1">({margin.toFixed(1)}%)</span>
                 </p>
               </div>
             </div>
@@ -308,11 +308,11 @@ export default function ProductFormPage() {
         </div>
 
         {/* Stock */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-4">
-          <h2 className="font-semibold text-slate-700">Stock</h2>
+        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 space-y-4">
+          <h2 className="font-semibold text-zinc-300">Stock</h2>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-600">Stock inicial</label>
+              <label className="text-sm font-medium text-zinc-400">Stock inicial</label>
               <input
                 type="number"
                 min="0"
@@ -323,7 +323,7 @@ export default function ProductFormPage() {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-600">Stock mínimo (alerta)</label>
+              <label className="text-sm font-medium text-zinc-400">Stock mínimo (alerta)</label>
               <input
                 type="number"
                 min="0"
@@ -341,14 +341,14 @@ export default function ProductFormPage() {
           <button
             type="button"
             onClick={() => navigate('/productos')}
-            className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50"
+            className="flex-1 py-2.5 border border-zinc-700 rounded-xl text-sm font-medium text-zinc-400 hover:bg-zinc-800"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-60"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-700 text-white rounded-xl text-sm font-semibold hover:bg-red-800 disabled:opacity-60"
           >
             <Save size={16} />
             {loading ? 'Guardando…' : 'Guardar'}

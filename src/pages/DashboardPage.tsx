@@ -76,19 +76,19 @@ export default function DashboardPage() {
       {/* Header + tabs */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">Dashboard</h1>
-          <p className="text-sm text-slate-500">Resumen del negocio</p>
+          <h1 className="text-xl font-bold text-zinc-100">Dashboard</h1>
+          <p className="text-sm text-zinc-500">Resumen del negocio</p>
         </div>
 
-        <div className="flex bg-slate-100 rounded-lg p-1 gap-1 overflow-x-auto">
+        <div className="flex bg-zinc-800 rounded-lg p-1 gap-1 overflow-x-auto">
           {TABS.map(({ value, label }) => (
             <button
               key={value}
               onClick={() => setDateRange(value)}
               className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
                 dateRange === value
-                  ? 'bg-white text-slate-800 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
+                  ? 'bg-zinc-700 text-zinc-100 shadow-sm'
+                  : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
               {label}
@@ -102,7 +102,7 @@ export default function DashboardPage() {
         <select
           value={selectedWeek}
           onChange={(e) => setSelectedWeek(e.target.value)}
-          className="w-full sm:w-auto border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white"
+          className="w-full sm:w-auto border border-zinc-700 rounded-lg px-3 py-2 text-sm bg-zinc-800 text-zinc-100"
         >
           {weekOptions.map((w) => (
             <option key={w.value} value={w.value}>{w.label}</option>
@@ -114,7 +114,7 @@ export default function DashboardPage() {
         <select
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
-          className="w-full sm:w-auto border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white"
+          className="w-full sm:w-auto border border-zinc-700 rounded-lg px-3 py-2 text-sm bg-zinc-800 text-zinc-100"
         >
           {monthOptions.map((m) => (
             <option key={m.value} value={m.value}>{m.label}</option>
@@ -125,32 +125,32 @@ export default function DashboardPage() {
       {dateRange === 'rango' && (
         <div className="flex gap-2 items-end flex-wrap">
           <div>
-            <label className="block text-xs text-slate-500 mb-1">Desde</label>
+            <label className="block text-xs text-zinc-500 mb-1">Desde</label>
             <input
               type="date"
               value={pendingFrom}
               max={pendingTo || todayStr}
               onChange={(e) => { setPendingFrom(e.target.value); setRangePending(true); }}
-              className="border border-slate-200 rounded-lg px-3 py-2 text-sm"
+              className="border border-zinc-700 rounded-lg px-3 py-2 text-sm bg-zinc-800 text-zinc-100"
             />
           </div>
           <div>
-            <label className="block text-xs text-slate-500 mb-1">Hasta</label>
+            <label className="block text-xs text-zinc-500 mb-1">Hasta</label>
             <input
               type="date"
               value={pendingTo}
               min={pendingFrom}
               max={todayStr}
               onChange={(e) => { setPendingTo(e.target.value); setRangePending(true); }}
-              className="border border-slate-200 rounded-lg px-3 py-2 text-sm"
+              className="border border-zinc-700 rounded-lg px-3 py-2 text-sm bg-zinc-800 text-zinc-100"
             />
           </div>
           <button
             onClick={handleRangeApply}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
               rangePending
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                ? 'bg-red-700 text-white hover:bg-red-800'
+                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
             }`}
           >
             Buscar
