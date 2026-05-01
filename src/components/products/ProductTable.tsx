@@ -22,6 +22,11 @@ export default function ProductTable({ products, selectable, selected = [], onSe
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortAsc, setSortAsc] = useState(true);
   const [filterLowStock, setFilterLowStock] = useState(false);
+  const [filterCategory, setFilterCategory] = useState('');
+
+  const categories = Array.from(
+    new Set(products.filter((p) => p.category?.name).map((p) => p.category!.name))
+  ).sort();
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortAsc(!sortAsc);
@@ -54,7 +59,8 @@ export default function ProductTable({ products, selectable, selected = [], onSe
       const q = search.toLowerCase();
       const matchSearch = !q || p.name.toLowerCase().includes(q) || (p.barcode ?? '').includes(q);
       const matchStock = !filterLowStock || p.stock <= p.min_stock;
-      return matchSearch && matchStock;
+      const matchCategory = !filterCategory || p.category?.name === filterCategory;
+      return matchSearch && matchStock && matchCategory;
     })
     .sort((a, b) => {
       let av: number | string = 0;
@@ -101,6 +107,22 @@ export default function ProductTable({ products, selectable, selected = [], onSe
             className="w-full pl-9 pr-3 py-2 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 bg-zinc-900 text-zinc-100"
           />
         </div>
+        {categories.length > 0 && (
+          <select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className={`px-3 py-2 text-sm rounded-lg border transition-colors bg-zinc-900 ${
+              filterCategory
+                ? 'border-red-700 text-red-400'
+                : 'border-zinc-700 text-zinc-400 hover:border-zinc-500'
+            }`}
+          >
+            <option value="">Todas las categorías</option>
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+        )}
         <button
           onClick={() => setFilterLowStock(!filterLowStock)}
           className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border transition-colors ${

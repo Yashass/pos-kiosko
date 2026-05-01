@@ -76,7 +76,7 @@ export default function SalesPage() {
   return (
     <div className="flex flex-col md:flex-row h-full">
       {/* Product search panel */}
-      <div className="flex-1 flex flex-col p-4 md:border-r border-zinc-800 md:max-w-md lg:max-w-lg">
+      <div className="flex flex-col p-4 md:flex-1 md:border-r border-zinc-800 md:max-w-md lg:max-w-lg max-h-[40vh] md:max-h-none overflow-hidden">
         <h1 className="text-xl font-bold text-zinc-100 mb-4">Nueva Venta</h1>
 
         {/* Search bar */}
@@ -161,11 +161,11 @@ export default function SalesPage() {
       </div>
 
       {/* Cart panel */}
-      <div className="md:w-80 lg:w-96 border-t md:border-t-0 md:border-l border-zinc-800 bg-zinc-900 flex flex-col max-h-[50vh] md:max-h-full">
-        <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-800">
+      <div className="flex-1 md:flex-none md:w-80 lg:w-96 border-t md:border-t-0 md:border-l border-zinc-800 bg-zinc-900 flex flex-col min-h-0 overflow-hidden">
+        <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-800 flex-none">
           <h2 className="font-bold text-zinc-200">Carrito</h2>
         </div>
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 min-h-0 overflow-hidden">
           <Cart />
         </div>
       </div>

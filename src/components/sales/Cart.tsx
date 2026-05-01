@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Trash2, Plus, Minus, ShoppingCart, CreditCard, Banknote, ArrowLeftRight } from 'lucide-react';
 import { useSaleStore } from '../../stores/saleStore';
-import { formatCurrency, calcNetPrice, calcTaxInPrice } from '../../lib/calculations';
+import { formatCurrency } from '../../lib/calculations';
 import type { PaymentMethod } from '../../types';
 import toast from 'react-hot-toast';
 
@@ -42,10 +42,8 @@ export default function Cart({ onSaleComplete }: Props) {
   return (
     <div className="flex flex-col h-full">
       {/* Items */}
-      <div className="flex-1 overflow-auto divide-y divide-zinc-800">
+      <div className="flex-1 min-h-0 overflow-auto divide-y divide-zinc-800">
         {cart.map((item) => {
-          const netPrice = calcNetPrice(item.unit_price, item.product.tax_rate);
-          const tax = calcTaxInPrice(item.unit_price, item.product.tax_rate);
           return (
             <div key={item.product.id} className="p-3 flex gap-3">
               <div className="flex-1 min-w-0">
@@ -87,7 +85,7 @@ export default function Cart({ onSaleComplete }: Props) {
       </div>
 
       {/* Totals */}
-      <div className="border-t border-zinc-800 p-3 bg-zinc-900 space-y-2">
+      <div className="flex-none border-t border-zinc-800 p-3 bg-zinc-900 space-y-2">
         <button
           onClick={() => setShowDetails(!showDetails)}
           className="w-full text-left text-xs text-red-500 hover:underline"
