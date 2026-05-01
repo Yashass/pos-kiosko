@@ -4,16 +4,16 @@ export default function LoginPage() {
   const { signInWithGoogle, loading, error } = useAuthStore();
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
-      <div className="bg-zinc-900 rounded-2xl shadow-2xl p-8 w-full max-w-sm space-y-6 border border-zinc-800">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm space-y-6 border border-zinc-200">
         <div className="flex flex-col items-center gap-3">
           <img src="/icon.svg" alt="POS Kyoskuhin" className="w-20 h-20 object-contain" />
-          <h1 className="text-2xl font-bold text-zinc-100">POS Kyoskuhin</h1>
+          <h1 className="text-2xl font-bold text-zinc-800">POS Kyoskuhin</h1>
           <p className="text-sm text-zinc-500 text-center">Iniciá sesión para continuar</p>
         </div>
 
         {error && (
-          <div className="bg-red-950/30 border border-red-700 rounded-xl p-3 text-sm text-red-400 text-center">
+          <div className="bg-red-50 border border-red-300 rounded-xl p-3 text-sm text-red-600 text-center">
             {error}
           </div>
         )}
@@ -21,7 +21,7 @@ export default function LoginPage() {
         <button
           onClick={signInWithGoogle}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-zinc-700 rounded-xl text-zinc-200 font-semibold hover:bg-zinc-800 active:bg-zinc-700 transition-colors disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-zinc-300 rounded-xl text-zinc-700 font-semibold hover:bg-zinc-50 active:bg-zinc-100 transition-colors disabled:opacity-50"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -32,7 +32,7 @@ export default function LoginPage() {
           {loading ? 'Cargando…' : 'Continuar con Google'}
         </button>
 
-        <p className="text-xs text-center text-zinc-600">
+        <p className="text-xs text-center text-zinc-400">
           Acceso restringido · Solo usuarios autorizados
         </p>
       </div>
